@@ -1,0 +1,8 @@
+.vscode
+src
+.swcrc
+tsconfig.json
+.eslint*
+test
+example.js
+.git*
