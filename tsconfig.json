@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
-    "allowSyntheticDefaultImports": true,
+    "allowSyntheticDefaultImports": false,
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
@@ -16,7 +16,8 @@
     "isolatedModules": false,
     "declaration": true,
     "outDir": ".",
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
+    "moduleResolution": "Node",
   },
   "include": [
     "./src/**/*.ts"

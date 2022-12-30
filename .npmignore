@@ -6,3 +6,4 @@ tsconfig.json
 test
 example.js
 .git*
+dts-minify.js

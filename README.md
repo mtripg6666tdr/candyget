@@ -8,6 +8,7 @@ candyget is a small sized http(s) client for Node.js
 - Super small
 - No dependency
 - HTTP request by one line
+- Promise based
 - Infer HTTP method automatically
 - Stringify/parse JSON automatically
 - Decompress gzip/brotli/deflate automatically
@@ -38,11 +39,6 @@ stream.pipe(require("fs").createWriteStream("github.ico"));
 candyget.defaultOptions.headers["Custom-Header"] = "foo";
 ```
 
-## Install
-```sh
-npm i candyget
-```
-
 ## API
 `candyget` has only one exported function.
 
@@ -57,8 +53,8 @@ Make http(s) request to the given url and return its result.
 * `url` can be a `string` or a `URL` object.
 * `returnType` can be either of `"string"`, `"buffer"`, `"stream"` or `"json"`.
   * `"string"` - `body` in the returned object will be a `string`.
-  * `"buffer"` - `body` will be a [`Buffer`](https://nodejs.org/api/buffer.html#class-buffer).
-  * `"stream"` - `body` will be a [`Readable`](https://nodejs.org/api/stream.html#class-streamreadable).
+  * `"buffer"` - `body` will be a `Buffer`.
+  * `"stream"` - `body` will be a `Readable`.
   * `"json"` - `body` will be a parsed object. If failed to parse, `body` will be a `string`.
 * `options` can be an object that can have the following properties:
   * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
@@ -72,7 +68,7 @@ Make http(s) request to the given url and return its result.
 `candyget` returns promise. When no-http errors such as network errors occur, the promise will be rejected.  
 The promise will be resolved as an object, which has the following properties:
 * `statusCode` - [HTTP status code](https://developer.mozilla.org/docs/Web/HTTP/Status)
-* `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
+* `headers` - [`IncomingHttpHeaders`](https://bit.ly/3hWnS9X)
 * `body` - response body
 * `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
 * `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)

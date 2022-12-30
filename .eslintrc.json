@@ -22,6 +22,7 @@
   ],
   "rules": {
     "@typescript-eslint/semi": ["error", "always"],
+    "@typescript-eslint/no-unnecessary-type-assertion": "warn",
     "semi": "off",
     "import/order": ["warn", {
       "groups": [
