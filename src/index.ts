@@ -153,6 +153,12 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   // execute request
   let redirectCount = 0;
   const executeRequest = function(url:URL){
+    if(redirectCount > 0){
+      delete options.headers["cookie"];
+      delete options.headers["Cookie"];
+      delete options.headers["authorization"];
+      delete options.headers["Authorization"];
+    }
     return new Promise<CGPromiseInner<T>>(function(resolve, reject){
       const req = HttpLibs[url.protocol as keyof typeof HttpLibs]?.request(url, {
         method: method,
