@@ -23,6 +23,7 @@
   "rules": {
     "@typescript-eslint/semi": ["error", "always"],
     "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "semi": "off",
     "import/order": ["warn", {
       "groups": [
@@ -43,6 +44,7 @@
       },
       "newlines-between": "always"
     }],
+    "eslint-comments/no-unused-disable": "error",
     "destructuring-import-spacing/destructuring-import-spacing": "warn"
   }
 }

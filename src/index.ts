@@ -3,13 +3,9 @@ import type { Readable, TransformOptions } from "stream";
 
 // Import these module by `require` instead of `import` in order to prevent from generating helper methods.
 const requireLocal = require;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const http = requireLocal("http") as typeof import("http");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const https = requireLocal("https") as typeof import("https");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { PassThrough, pipeline } = requireLocal("stream") as typeof import("stream");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const zlib = requireLocal("zlib") as typeof import("zlib");
 
 /**
@@ -62,7 +58,8 @@ const BodyTypesSet:Readonly<(keyof BodyTypes)[]> = ["string", "buffer", "stream"
 type HttpMethods = "GET"|"HEAD"|"POST"|"PUT"|"DELETE"|"OPTIONS"|"TRACE"|"PATCH";
 const HttpMethodsSet:Readonly<HttpMethods[]> = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "TRACE", "PATCH"];
 type Url = string|URL;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/ban-types
+type EmptyObject = {};
 const HttpLibs = {
   "http:": http,
   "https:": https,
@@ -79,6 +76,10 @@ const genParamErrMsg = (name:string) => `Invalid Param:${name}`;
  * A function that does nothing
  */
 const noop = () => {/* empty */};
+/**
+ * A function that returns a new empty object
+ */
+const createEmpty = () => Object.create(null) as EmptyObject;
 
 type CGPromiseInner<T extends keyof BodyTypes> = {
   statusCode:number,
@@ -143,34 +144,40 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   if(!BodyTypesSet.includes(returnType)) throw new CandyGetError(genParamErrMsg("returnType"));
   if(typeof overrideOptions != "object") throw new CandyGetError(genParamErrMsg("options"));
   // prepare optiosn
-  const options = Object.assign({}, candyget.defaultOptions, overrideOptions);
-  options.headers = Object.assign({}, candyget.defaultOptions.headers, overrideOptions.headers);
-  if(typeof body !== "string" && !Object.keys(options.headers).some(key => key.toLowerCase() === "content-type")){
-    options.headers["Content-Type"] = "application/json";
+  const options = Object.assign(createEmpty(), candyget.defaultOptions, overrideOptions);
+  const headers = Object.assign(createEmpty(), candyget.defaultOptions.headers, overrideOptions.headers);
+  // once clear headers
+  options.headers = createEmpty();
+  // assign headers with keys in lower case
+  Object.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
+  // if json was passed and content-type is not set, set automatically
+  if(typeof body !== "string" && !options.headers["content-type"]){
+    options.headers["content-type"] = "application/json";
   }
   if(typeof options.timeout != "number" || options.timeout === Infinity || options.timeout < 1) throw new CandyGetError("Invalid timeout");
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) throw new CandyGetError("Invalid maxRedirect");
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) throw new CandyGetError("Invalid maxRedirects");
   // execute request
   let redirectCount = 0;
-  const executeRequest = function(url:URL){
-    if(redirectCount > 0){
-      delete options.headers["cookie"];
-      delete options.headers["Cookie"];
-      delete options.headers["authorization"];
-      delete options.headers["Authorization"];
+  // store the original url
+  const originalUrl = url;
+  const executeRequest = (requestUrl:URL) => {
+    // delete credentials to prevent from leaking credentials
+    if(redirectCount > 0 && originalUrl.host !== requestUrl.host){
+      delete options.headers!["cookie"];
+      delete options.headers!["authorization"];
     }
-    return new Promise<CGPromiseInner<T>>(function(resolve, reject){
-      const req = HttpLibs[url.protocol as keyof typeof HttpLibs]?.request(url, {
+    return new Promise<CGPromiseInner<T>>((resolve, reject) => {
+      const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs]?.request(requestUrl, {
         method: method,
         headers: options.headers,
         timeout: options.timeout,
         agent: options.agent,
       }, function(res){
-        if(redirectCount < options.maxRedirects && redirectStatuses.includes(res.statusCode as number)){
+        if(redirectCount < options.maxRedirects! && redirectStatuses.includes(res.statusCode as number)){
           const redirectTo = res.headers.location;
           if(typeof redirectTo == "string"){
             redirectCount++;
-            resolve(executeRequest(new URL(redirectTo, url)));
+            resolve(executeRequest(new URL(redirectTo, requestUrl)));
             return;
           }
         }
@@ -194,7 +201,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
             request: req,
             response: res,
           });
-        }else if(["buffer", "string", "json"].some(t => t == returnType)){
+        }else{
           let bufs:Buffer[]|null = [];
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
             .on("data", buf => (bufs as Buffer[]).push(buf))
@@ -242,7 +249,7 @@ candyget.defaultOptions = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
   } as {[key:string]:string},
   maxRedirects: 10,
-};
+} as Opts;
 
 ([
   "string",
