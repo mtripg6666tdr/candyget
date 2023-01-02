@@ -89,7 +89,8 @@ type CGPromiseInner<T extends keyof BodyTypes> = {
   response:IncomingMessage,
 };
 type CGReturn<T extends keyof BodyTypes> = Promise<CGPromiseInner<T>>;
-type ShortenCG<T extends keyof BodyTypes> = (url:Url) => CGReturn<T>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShortenCG<T extends keyof BodyTypes> = (url:Url, options?:Opts, body?:any) => CGReturn<T>;
 type CGExport = typeof candyget & {
   /**
    * Default options used in candyget, which can be overwritten by the argument of candyget
