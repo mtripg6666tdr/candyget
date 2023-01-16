@@ -67,10 +67,11 @@ Make http(s) request to the given url and return its result.
 `candyget` returns promise. When no-http errors such as network errors occur, the promise will be rejected.  
 The promise will be resolved as an object, which has the following properties:
 * `statusCode` - [HTTP status code](https://developer.mozilla.org/docs/Web/HTTP/Status)
-* `headers` - [`IncomingHttpHeaders`](https://bit.ly/3hWnS9X)
+* `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
 * `body` - response body, type of which is what you specified.
 * `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
 * `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
+* `url` - [`URL`](https://developer.mozilla.org/ja/docs/Web/API/URL) is the resolved url.
 
 ### candyget.defaultOptions
 

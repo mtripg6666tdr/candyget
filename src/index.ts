@@ -92,6 +92,7 @@ type CGPromiseInner<T extends keyof BodyTypes> = {
   body:BodyTypes[T],
   request:ClientRequest,
   response:IncomingMessage,
+  url:URL,
 };
 type CGReturn<T extends keyof BodyTypes> = Promise<CGPromiseInner<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,6 +154,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   if(!HttpMethodsSet.includes(method)) throw new CandyGetError(genParamErrMsg("method"));
   if(!BodyTypesSet.includes(returnType)) throw new CandyGetError(genParamErrMsg("returnType"));
   if(typeof overrideOptions != "object") throw new CandyGetError(genParamErrMsg("options"));
+  if(!(url instanceof URL)) throw new CandyGetError(genParamErrMsg("url"));
   // prepare optiosn
   const options = Object.assign(createEmpty(), candyget.defaultOptions, overrideOptions);
   const headers = Object.assign(createEmpty(), candyget.defaultOptions.headers, overrideOptions.headers);
@@ -197,6 +199,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           statusCode,
           request: req,
           response: res,
+          url: requestUrl,
         };
         if(returnType == "empty"){
           resolve({
