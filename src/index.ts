@@ -76,6 +76,7 @@ const CONTENT_TYPE = "content-type";
  */
 class CandyGetError extends Error {}
 const genParamErrMsg = (name:string) => `Invalid Param:${name}`;
+const genRejectedPromise = (message:string) => Promise.reject(new CandyGetError(message));
 
 /**
  * A function that does nothing
@@ -151,10 +152,10 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     body = rawBody || null;
   }
   // validate params (not strictly)
-  if(!HttpMethodsSet.includes(method)) throw new CandyGetError(genParamErrMsg("method"));
-  if(!BodyTypesSet.includes(returnType)) throw new CandyGetError(genParamErrMsg("returnType"));
-  if(typeof overrideOptions != "object") throw new CandyGetError(genParamErrMsg("options"));
-  if(!(url instanceof URL)) throw new CandyGetError(genParamErrMsg("url"));
+  if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genParamErrMsg("method"));
+  if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genParamErrMsg("returnType"));
+  if(typeof overrideOptions != "object") return genRejectedPromise(genParamErrMsg("options"));
+  if(!(url instanceof URL)) return genRejectedPromise(genParamErrMsg("url"));
   // prepare optiosn
   const options = Object.assign(createEmpty(), candyget.defaultOptions, overrideOptions);
   const headers = Object.assign(createEmpty(), candyget.defaultOptions.headers, overrideOptions.headers);
@@ -166,8 +167,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   if(typeof body !== "string" && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
-  if(typeof options.timeout != "number" || options.timeout < 1) throw new CandyGetError(genParamErrMsg("timeout"));
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) throw new CandyGetError(genParamErrMsg("maxRedirects"));
+  if(typeof options.timeout != "number" || options.timeout < 1) return genRejectedPromise(genParamErrMsg("timeout"));
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) return genRejectedPromise(genParamErrMsg("maxRedirects"));
   // execute request
   let redirectCount = 0;
   // store the original url
