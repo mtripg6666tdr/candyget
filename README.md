@@ -76,5 +76,18 @@ The promise will be resolved as an object, which has the following properties:
 
 You can override this to change the default options, which are used by candyget.
 
+### Shorthand functions
+
+You can use shorthand functions instead of passing the return type as a second parameter.
+```js
+candyget(URL, "string");
+// equals
+candyget.string(URL);
+
+candyget(URL, "json", OPTIONS, BODY);
+// equals
+candyget.json(URL, OPTIONS, BODY);
+```
+
 ## License
 [MIT](LICENSE)
