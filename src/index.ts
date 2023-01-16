@@ -192,6 +192,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
             redirectCount++;
             resolve(executeRequest(new URL(redirectTo, requestUrl)));
             return;
+          }else{
+            reject(new CandyGetError("no location header found"));
           }
         }
         const partialResult = {
