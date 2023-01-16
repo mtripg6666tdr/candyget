@@ -124,11 +124,11 @@ type CGExport = typeof candyget & {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts, body?:any):CGReturn<T>;
+function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null, body?:any):CGReturn<T>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:Opts, body?:any):CGReturn<T>;
+function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:Opts|null, body?:any):CGReturn<T>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, returnTypeOrUrl:T|Url, optionsOrReturnType?:Opts|T, bodyOrOptions?:any|Opts, rawBody?:any):CGReturn<T>{
+function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, returnTypeOrUrl:T|Url, optionsOrReturnType?:Opts|null|T, bodyOrOptions?:any|Opts|null, rawBody?:any):CGReturn<T>{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method:HttpMethods, url:URL, returnType:T, overrideOptions:Opts, body:any|null;
   try{
