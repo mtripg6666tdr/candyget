@@ -7,3 +7,5 @@ test
 example.js
 .git*
 dts-minify.js
+coverage
+.nyc_output
