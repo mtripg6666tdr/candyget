@@ -253,6 +253,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         }
       })
         ?.on("error", reject)
+        ?.on("timeout", () => reject("timed out"))
       ;
       if(!req) throw new CandyGetError(genParamErrMsg("url"));
       if(body){
