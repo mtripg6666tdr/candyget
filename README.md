@@ -1,4 +1,6 @@
 # candyget
+[![npm](https://img.shields.io/npm/v/candyget)](https://www.npmjs.com/package/candyget)
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/candyget)
 > This project is still in development phase.
 
 candyget is a small sized http(s) client for Node.js
