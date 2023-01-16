@@ -144,8 +144,9 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     method = body ? "POST" : "GET";
   }
   catch{
+    if(typeof urlOrMethod !== "string") return genRejectedPromise(genParamErrMsg("url"));
     // (method:HttpMethods, url:UrlResolvable, returnType:T, body?:BodyResolvable):ReturnTypes[T];
-    method = (urlOrMethod as string).toUpperCase() as HttpMethods;
+    method = urlOrMethod.toUpperCase() as HttpMethods;
     url = typeof returnTypeOrUrl === "string" ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
     returnType = optionsOrReturnType as T;
     overrideOptions = bodyOrOptions as Opts || {};
@@ -167,8 +168,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   if(typeof body !== "string" && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
-  if(typeof options.timeout != "number" || options.timeout < 1) return genRejectedPromise(genParamErrMsg("timeout"));
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) return genRejectedPromise(genParamErrMsg("maxRedirects"));
+  if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genParamErrMsg("timeout"));
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genParamErrMsg("maxRedirects"));
   // execute request
   let redirectCount = 0;
   // store the original url
