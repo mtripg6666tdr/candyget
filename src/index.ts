@@ -52,9 +52,13 @@ interface BodyTypes {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: string|any,
+  /**
+   * Only do a request. Response will not be parsed. You can handle the response if necessary
+   */
+  empty: null,
 }
 
-const BodyTypesSet:Readonly<(keyof BodyTypes)[]> = ["string", "buffer", "stream", "json"];
+const BodyTypesSet:Readonly<(keyof BodyTypes)[]> = ["string", "buffer", "stream", "json", "empty"];
 type HttpMethods = "GET"|"HEAD"|"POST"|"PUT"|"DELETE"|"OPTIONS"|"TRACE"|"PATCH";
 const HttpMethodsSet:Readonly<HttpMethods[]> = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "TRACE", "PATCH"];
 type Url = string|URL;
@@ -65,6 +69,7 @@ const HttpLibs = {
   "https:": https,
 } as const;
 const redirectStatuses:Readonly<number[]> = [301, 302, 303, 307, 308];
+const CONTENT_TYPE = "content-type";
 
 /**
  * Represents errors emitted manually in candyget
@@ -112,6 +117,10 @@ type CGExport = typeof candyget & {
    * Shorthand of candyget(url, "json")
    */
   json:ShortenCG<"json">,
+  /**
+   * Shorthand of candyget(url, "emtpy")
+   */
+  empty:ShortenCG<"empty">,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,11 +161,11 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   // assign headers with keys in lower case
   Object.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
   // if json was passed and content-type is not set, set automatically
-  if(typeof body !== "string" && !options.headers["content-type"]){
-    options.headers["content-type"] = "application/json";
+  if(typeof body !== "string" && !options.headers[CONTENT_TYPE]){
+    options.headers[CONTENT_TYPE] = "application/json";
   }
-  if(typeof options.timeout != "number" || options.timeout === Infinity || options.timeout < 1) throw new CandyGetError("Invalid timeout");
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) throw new CandyGetError("Invalid maxRedirects");
+  if(typeof options.timeout != "number" || options.timeout < 1) throw new CandyGetError(genParamErrMsg("timeout"));
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0) throw new CandyGetError(genParamErrMsg("maxRedirects"));
   // execute request
   let redirectCount = 0;
   // store the original url
@@ -173,14 +182,27 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         headers: options.headers,
         timeout: options.timeout,
         agent: options.agent,
-      }, function(res){
-        if(redirectCount < options.maxRedirects! && redirectStatuses.includes(res.statusCode as number)){
+      }, (res) => {
+        const statusCode = res.statusCode as number;
+        if(redirectCount < options.maxRedirects! && redirectStatuses.includes(statusCode)){
           const redirectTo = res.headers.location;
           if(typeof redirectTo == "string"){
             redirectCount++;
             resolve(executeRequest(new URL(redirectTo, requestUrl)));
             return;
           }
+        }
+        const partialResult = {
+          headers: res.headers,
+          statusCode,
+          request: req,
+          response: res,
+        };
+        if(returnType == "empty"){
+          resolve({
+            body: null as unknown as BodyTypes[T],
+            ...partialResult,
+          });
         }
         const pipelineFragment:Readable[] = [res];
         const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
@@ -197,17 +219,14 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           pipeline(pipelineFragment, noop);
           resolve({
             body: stream as unknown as BodyTypes[T],
-            headers: res.headers,
-            statusCode: res.statusCode as number,
-            request: req,
-            response: res,
+            ...partialResult,
           });
         }else{
           let bufs:Buffer[]|null = [];
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
             .on("data", buf => (bufs as Buffer[]).push(buf))
             .on("end", () => {
-              const result = Buffer.concat((bufs as Buffer[])) as unknown as BodyTypes[T];
+              const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
               const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
               let body = rawBody;
               if(returnType == "json"){
@@ -217,11 +236,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
                 catch{/* empty */}
               }
               resolve({
-                body: body,
-                headers: res.headers,
-                statusCode: res.statusCode as number,
-                request: req,
-                response: res,
+                body,
+                ...partialResult
               });
               bufs = null;
             })
@@ -252,12 +268,7 @@ candyget.defaultOptions = {
   maxRedirects: 10,
 } as Opts;
 
-([
-  "string",
-  "buffer",
-  "stream",
-  "json",
-] as const).map((type) => {
+BodyTypesSet.map((type) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (candyget as CGExport)[type] = function(url:Url, options?:Opts, body?:any){
       return candyget(url, type, options, body);
