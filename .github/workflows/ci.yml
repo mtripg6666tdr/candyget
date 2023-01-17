@@ -87,3 +87,19 @@ jobs:
 
       - name: Test
         run: npm test
+
+  success-all-test:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - test
+    steps:
+      - uses: technote-space/workflow-conclusion-action@v3
+
+      - name: Check failure
+        if: env.WORKFLOW_CONCLUSION == 'failure'
+        run: exit 1
+        
+      - name: Success
+        run: echo "All done"
+        if: ${{ success() }}
