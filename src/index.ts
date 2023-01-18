@@ -77,14 +77,9 @@ const CONTENT_TYPE = "content-type";
 class CandyGetError extends Error {}
 const genParamErrMsg = (name:string) => `Invalid Param:${name}`;
 const genRejectedPromise = (message:string) => Promise.reject(new CandyGetError(message));
-
-/**
- * A function that does nothing
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isString = ((target:any) => typeof target == "string") as (target:any)=>target is string;
 const noop = () => {/* empty */};
-/**
- * A function that returns a new empty object
- */
 const createEmpty = () => Object.create(null) as EmptyObject;
 
 type CGPromiseInner<T extends keyof BodyTypes> = {
@@ -144,10 +139,10 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     method = body ? "POST" : "GET";
   }
   catch{
-    if(typeof urlOrMethod !== "string") return genRejectedPromise(genParamErrMsg("url"));
+    if(!isString(urlOrMethod)) return genRejectedPromise(genParamErrMsg("url"));
     // (method:HttpMethods, url:UrlResolvable, returnType:T, body?:BodyResolvable):ReturnTypes[T];
     method = urlOrMethod.toUpperCase() as HttpMethods;
-    url = typeof returnTypeOrUrl === "string" ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
+    url = isString(returnTypeOrUrl) ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
     returnType = optionsOrReturnType as T;
     overrideOptions = bodyOrOptions as Opts || {};
     body = rawBody || null;
@@ -165,7 +160,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   // assign headers with keys in lower case
   Object.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
   // if json was passed and content-type is not set, set automatically
-  if(typeof body !== "string" && !options.headers[CONTENT_TYPE]){
+  if(!isString(body) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
   if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genParamErrMsg("timeout"));
@@ -190,7 +185,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         const statusCode = res.statusCode as number;
         if(redirectCount < options.maxRedirects! && redirectStatuses.includes(statusCode)){
           const redirectTo = res.headers.location;
-          if(typeof redirectTo == "string"){
+          if(isString(redirectTo)){
             redirectCount++;
             setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
             if(!req.destroyed) req.destroy();
@@ -215,11 +210,11 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         }
         const pipelineFragment:Readable[] = [res];
         const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
-        if(contentEncoding === "gzip"){
+        if(contentEncoding == "gzip"){
           pipelineFragment.push(zlib.createGunzip());
-        }else if(contentEncoding === "br"){
+        }else if(contentEncoding == "br"){
           pipelineFragment.push(zlib.createBrotliDecompress());
-        }else if(contentEncoding === "deflate"){
+        }else if(contentEncoding == "deflate"){
           pipelineFragment.push(zlib.createInflate());
         }
         if(returnType == "stream"){
