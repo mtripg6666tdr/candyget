@@ -336,6 +336,17 @@ describe("CandyGet Tests", function(){
     });
   });
 
+  describe("#Passing URL object instead of string", function(){
+    it("Status Code is ok", async function(){
+      const scope = nock(nockUrl())
+        .get("/get")
+        .reply(200);
+      const result = await candyget(new URL(nockUrl("/get")), "string");
+      scope.done();
+      assert.equal(result.statusCode, 200);
+    });
+  });
+
   describe("#Automated Method Selecting", function(){
     it("Status Code is ok", async function(){
       const scope = nock(nockUrl())
