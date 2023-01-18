@@ -1,7 +1,7 @@
 # candyget
 [![npm](https://img.shields.io/npm/v/candyget)](https://www.npmjs.com/package/candyget)
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/candyget)
-> This project is still in development phase.
+![npm bundle size](https://img.shields.io/bundlephobia/min/candyget)
+> This project is still in a development phase.
 
 candyget is a small sized http(s) client for Node.js
 
@@ -27,21 +27,19 @@ const { statusCode, body } = await candyget("https://example.com", "string");
 // or simply: candyget.string("https://example.com");
 
 // simply post
-const { body: json } = await candyget("https://httpbin.org/post", "json", null, {
-  "foo": "bar",
+const { body: json } = await candyget("https://your.site/", "json", null, {
+  foo: "bar",
 });
 
 // response can be streamed
-const { body: stream } = await candyget("https://github.com/favicon.ico", "stream");
-stream.pipe(require("fs").createWriteStream("github.ico"));
+const { body: stream } = await candyget("https://foo.bar/bin", "stream");
+stream.pipe(require("fs").createWriteStream("foo.bin"));
 
 // Customize default options
 candyget.defaultOptions.headers["Custom-Header"] = "foo";
 ```
 
 ## API
-`candyget` has only one exported function.
-
 ### candyget(url, returnType, options?, body?)
 
 `candyget` will automatically infer the method type; if body is present, infer as `GET`, otherwise `POST`.  
@@ -68,12 +66,12 @@ Make http(s) request to the given url and return its result.
 
 `candyget` returns promise. When no-http errors such as network errors occur, the promise will be rejected.  
 The promise will be resolved as an object, which has the following properties:
-* `statusCode` - [HTTP status code](https://developer.mozilla.org/docs/Web/HTTP/Status)
+* `statusCode` - HTTP status code
 * `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
 * `body` - response body, type of which is what you specified.
 * `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
 * `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
-* `url` - [`URL`](https://developer.mozilla.org/ja/docs/Web/API/URL) is the resolved url.
+* `url` - [`URL`](https://developer.mozilla.org/ja/docs/Web/API/URL), which is the resolved url.
 
 ### candyget.defaultOptions
 
