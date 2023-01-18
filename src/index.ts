@@ -75,8 +75,9 @@ const CONTENT_TYPE = "content-type";
  * Represents errors emitted manually in candyget
  */
 class CandyGetError extends Error {}
-const genParamErrMsg = (name:string) => `Invalid Param:${name}`;
-const genRejectedPromise = (message:string) => Promise.reject(new CandyGetError(message));
+const genInvalidParamMessage = (name:string) => `Invalid Param:${name}`;
+const genError = (message:string) => new CandyGetError(message);
+const genRejectedPromise = (message:string) => Promise.reject(genError(message));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isString = ((target:any) => typeof target == "string") as (target:any)=>target is string;
 const noop = () => {/* empty */};
@@ -142,7 +143,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     method = body ? "POST" : "GET";
   }
   catch{
-    if(!isString(urlOrMethod)) return genRejectedPromise(genParamErrMsg("url"));
+    if(!isString(urlOrMethod)) return genRejectedPromise(genInvalidParamMessage("url"));
     // (method:HttpMethods, url:UrlResolvable, returnType:T, body?:BodyResolvable):ReturnTypes[T];
     method = urlOrMethod.toUpperCase() as HttpMethods;
     url = isString(returnTypeOrUrl) ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
@@ -151,10 +152,10 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     body = rawBody || null;
   }
   // validate params (not strictly)
-  if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genParamErrMsg("method"));
-  if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genParamErrMsg("returnType"));
-  if(typeof overrideOptions != "object") return genRejectedPromise(genParamErrMsg("options"));
-  if(!(url instanceof URL)) return genRejectedPromise(genParamErrMsg("url"));
+  if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
+  if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
+  if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
+  if(!(url instanceof URL)) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = Object.assign(createEmpty(), candyget.defaultOptions, overrideOptions);
   const headers = Object.assign(createEmpty(), candyget.defaultOptions.headers, overrideOptions.headers);
@@ -166,8 +167,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   if(!isString(body) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
-  if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genParamErrMsg("timeout"));
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genParamErrMsg("maxRedirects"));
+  if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
   // execute request
   let redirectCount = 0;
   // store the original url
@@ -194,7 +195,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
             destroy(req, res);
             return;
           }else{
-            reject(new CandyGetError("no location header found"));
+            reject(genError("no location header found"));
           }
         }
         const partialResult = {
@@ -258,8 +259,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         ?.on("error", reject)
         ?.on("timeout", () => reject("timed out"))
       ;
-      if(!req) throw new CandyGetError(genParamErrMsg("url"));
-      req.end(body ? typeof body === "string" ? body : JSON.stringify(body) : undefined);
+      if(!req) reject(genError(genInvalidParamMessage("url")));
+      req.end(body ? isString(body) ? body : JSON.stringify(body) : undefined);
     });
   };
   return executeRequest(url);
