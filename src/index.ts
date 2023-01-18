@@ -192,6 +192,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           const redirectTo = res.headers.location;
           if(typeof redirectTo == "string"){
             redirectCount++;
+            if(!res.destroyed) res.destroy();
             resolve(executeRequest(new URL(redirectTo, requestUrl)));
             return;
           }else{
@@ -233,6 +234,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
             .on("data", buf => (bufs as Buffer[]).push(buf))
             .on("end", () => {
+              if(!res.destroyed) res.destroy();
               const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
               const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
               let body = rawBody;
@@ -256,11 +258,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         ?.on("timeout", () => reject("timed out"))
       ;
       if(!req) throw new CandyGetError(genParamErrMsg("url"));
-      if(body){
-        req.end(typeof body === "string" ? body : JSON.stringify(body));
-      }else{
-        req.end();
-      }
+      req.end(body ? typeof body === "string" ? body : JSON.stringify(body) : undefined);
     });
   };
   return executeRequest(url);
