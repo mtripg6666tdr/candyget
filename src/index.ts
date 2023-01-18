@@ -75,17 +75,16 @@ const CONTENT_TYPE = "content-type";
  * Represents errors emitted manually in candyget
  */
 class CandyGetError extends Error {}
-const genParamErrMsg = (name:string) => `Invalid Param:${name}`;
-const genRejectedPromise = (message:string) => Promise.reject(new CandyGetError(message));
-
-/**
- * A function that does nothing
- */
+const genInvalidParamMessage = (name:string) => `Invalid Param:${name}`;
+const genError = (message:string) => new CandyGetError(message);
+const genRejectedPromise = (message:string) => Promise.reject(genError(message));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isString = ((target:any) => typeof target == "string") as (target:any)=>target is string;
 const noop = () => {/* empty */};
-/**
- * A function that returns a new empty object
- */
 const createEmpty = () => Object.create(null) as EmptyObject;
+const destroy = (...destroyable:{destroyed:boolean, destroy:()=>void}[]) => destroyable.map(stream => {
+  if(!stream.destroyed) stream.destroy();
+});
 
 type CGPromiseInner<T extends keyof BodyTypes> = {
   statusCode:number,
@@ -144,19 +143,19 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     method = body ? "POST" : "GET";
   }
   catch{
-    if(typeof urlOrMethod !== "string") return genRejectedPromise(genParamErrMsg("url"));
+    if(!isString(urlOrMethod)) return genRejectedPromise(genInvalidParamMessage("url"));
     // (method:HttpMethods, url:UrlResolvable, returnType:T, body?:BodyResolvable):ReturnTypes[T];
     method = urlOrMethod.toUpperCase() as HttpMethods;
-    url = typeof returnTypeOrUrl === "string" ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
+    url = isString(returnTypeOrUrl) ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
     returnType = optionsOrReturnType as T;
     overrideOptions = bodyOrOptions as Opts || {};
     body = rawBody || null;
   }
   // validate params (not strictly)
-  if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genParamErrMsg("method"));
-  if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genParamErrMsg("returnType"));
-  if(typeof overrideOptions != "object") return genRejectedPromise(genParamErrMsg("options"));
-  if(!(url instanceof URL)) return genRejectedPromise(genParamErrMsg("url"));
+  if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
+  if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
+  if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
+  if(!(url instanceof URL)) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = Object.assign(createEmpty(), candyget.defaultOptions, overrideOptions);
   const headers = Object.assign(createEmpty(), candyget.defaultOptions.headers, overrideOptions.headers);
@@ -165,11 +164,11 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   // assign headers with keys in lower case
   Object.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
   // if json was passed and content-type is not set, set automatically
-  if(typeof body !== "string" && !options.headers[CONTENT_TYPE]){
+  if(!isString(body) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
-  if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genParamErrMsg("timeout"));
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genParamErrMsg("maxRedirects"));
+  if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
   // execute request
   let redirectCount = 0;
   // store the original url
@@ -190,14 +189,13 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         const statusCode = res.statusCode as number;
         if(redirectCount < options.maxRedirects! && redirectStatuses.includes(statusCode)){
           const redirectTo = res.headers.location;
-          if(typeof redirectTo == "string"){
+          if(isString(redirectTo)){
             redirectCount++;
             setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
-            if(!req.destroyed) req.destroy();
-            if(!res.destroyed) res.destroy();
+            destroy(req, res);
             return;
           }else{
-            reject(new CandyGetError("no location header found"));
+            reject(genError("no location header found"));
           }
         }
         const partialResult = {
@@ -215,18 +213,17 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         }
         const pipelineFragment:Readable[] = [res];
         const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
-        if(contentEncoding === "gzip"){
+        if(contentEncoding == "gzip"){
           pipelineFragment.push(zlib.createGunzip());
-        }else if(contentEncoding === "br"){
+        }else if(contentEncoding == "br"){
           pipelineFragment.push(zlib.createBrotliDecompress());
-        }else if(contentEncoding === "deflate"){
+        }else if(contentEncoding == "deflate"){
           pipelineFragment.push(zlib.createInflate());
         }
         if(returnType == "stream"){
           const stream = new PassThrough(options.transformerOptions);
           stream.once("close", () => {
-            if(!req.destroyed) req.destroy();
-            if(!res.destroyed) res.destroy();
+            destroy(req, res);
           });
           pipelineFragment.push(stream);
           pipeline(pipelineFragment, noop);
@@ -239,8 +236,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
             .on("data", buf => (bufs as Buffer[]).push(buf))
             .on("end", () => {
-              if(!req.destroyed) req.destroy();
-              if(!res.destroyed) res.destroy();
+              destroy(req, res);
               const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
               const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
               let body = rawBody;
@@ -263,8 +259,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         ?.on("error", reject)
         ?.on("timeout", () => reject("timed out"))
       ;
-      if(!req) throw new CandyGetError(genParamErrMsg("url"));
-      req.end(body ? typeof body === "string" ? body : JSON.stringify(body) : undefined);
+      if(!req) reject(genError(genInvalidParamMessage("url")));
+      req.end(body ? isString(body) ? body : JSON.stringify(body) : undefined);
     });
   };
   return executeRequest(url);
