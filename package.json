@@ -6,8 +6,8 @@
   "types": "index.d.ts",
   "scripts": {
     "test": "mocha -- --require ts-node/register test/*.ts",
-    "coverage": "nyc --reporter=html --reporter=text mocha -- --require ts-node/register test/*.ts",
-    "build": "swc src --out-dir .&&tsc&&node dts-minify",
+    "coverage": "nyc -r=html -r=text npm test",
+    "build": "swc src -d .&&tsc&&node dts-minify",
     "lint": "eslint ."
   },
   "keywords": [
