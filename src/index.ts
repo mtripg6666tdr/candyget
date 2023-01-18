@@ -81,6 +81,9 @@ const genRejectedPromise = (message:string) => Promise.reject(new CandyGetError(
 const isString = ((target:any) => typeof target == "string") as (target:any)=>target is string;
 const noop = () => {/* empty */};
 const createEmpty = () => Object.create(null) as EmptyObject;
+const destroy = (...destroyable:{destroyed:boolean, destroy:()=>void}[]) => destroyable.map(stream => {
+  if(!stream.destroyed) stream.destroy();
+});
 
 type CGPromiseInner<T extends keyof BodyTypes> = {
   statusCode:number,
@@ -188,8 +191,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           if(isString(redirectTo)){
             redirectCount++;
             setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
-            if(!req.destroyed) req.destroy();
-            if(!res.destroyed) res.destroy();
+            destroy(req, res);
             return;
           }else{
             reject(new CandyGetError("no location header found"));
@@ -220,8 +222,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         if(returnType == "stream"){
           const stream = new PassThrough(options.transformerOptions);
           stream.once("close", () => {
-            if(!req.destroyed) req.destroy();
-            if(!res.destroyed) res.destroy();
+            destroy(req, res);
           });
           pipelineFragment.push(stream);
           pipeline(pipelineFragment, noop);
@@ -234,8 +235,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
             .on("data", buf => (bufs as Buffer[]).push(buf))
             .on("end", () => {
-              if(!req.destroyed) req.destroy();
-              if(!res.destroyed) res.destroy();
+              destroy(req, res);
               const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
               const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
               let body = rawBody;
