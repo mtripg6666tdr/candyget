@@ -192,8 +192,9 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           const redirectTo = res.headers.location;
           if(typeof redirectTo == "string"){
             redirectCount++;
+            setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
+            if(!req.destroyed) req.destroy();
             if(!res.destroyed) res.destroy();
-            resolve(executeRequest(new URL(redirectTo, requestUrl)));
             return;
           }else{
             reject(new CandyGetError("no location header found"));
@@ -223,6 +224,10 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
         }
         if(returnType == "stream"){
           const stream = new PassThrough(options.transformerOptions);
+          stream.once("close", () => {
+            if(!req.destroyed) req.destroy();
+            if(!res.destroyed) res.destroy();
+          });
           pipelineFragment.push(stream);
           pipeline(pipelineFragment, noop);
           resolve({
@@ -234,6 +239,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
             .on("data", buf => (bufs as Buffer[]).push(buf))
             .on("end", () => {
+              if(!req.destroyed) req.destroy();
               if(!res.destroyed) res.destroy();
               const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
               const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
