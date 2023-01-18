@@ -11,6 +11,24 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
+          
+      - name: Check npm cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.npm-cache.outputs.dir }}
+          key: npm-18.x-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
       
       - uses: preactjs/compressed-size-action@v2
         with:
