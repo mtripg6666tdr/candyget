@@ -49,7 +49,7 @@ If you want to specify the other method you can use:
 
 Make http(s) request to the given url and return its result.  
 * `url` can be a `string` or a `URL` object.
-* `returnType` can be either of `"string"`, `"buffer"`, `"stream"` or `"json"`.
+* `returnType` can be either of the followings:
   * `"string"` - `body` in the returned object will be a `string`.
   * `"buffer"` - `body` will be a `Buffer`.
   * `"stream"` - `body` will be a `Readable`.
@@ -57,7 +57,7 @@ Make http(s) request to the given url and return its result.
   * `"empty"` - Only do a request. `body` will be `null`. You can handle the response if necessary.
 * `options` can be an object that can have the following properties:
   * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
-  * `headers` - Object that presents HTTP headers. By default, `candyget` will pass `Accept`, `Accept-Encoding` and `User-Agent` (If you want to change, please refer to the `defaultOptions` below).
+  * `headers` - Object that presents HTTP headers. By default, `candyget` will pass `Accept`, `Accept-Encoding` and `User-Agent` (If you want to change, refer to the `defaultOptions` below).
   * `agent` - `http.Agent` to pass `http.request`.
   * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
@@ -71,7 +71,7 @@ The promise will be resolved as an object, which has the following properties:
 * `body` - response body, type of which is what you specified.
 * `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
 * `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
-* `url` - [`URL`](https://developer.mozilla.org/ja/docs/Web/API/URL), which is the resolved url.
+* `url` - [`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url.
 
 ### candyget.defaultOptions
 
