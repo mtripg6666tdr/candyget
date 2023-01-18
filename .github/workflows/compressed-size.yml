@@ -33,3 +33,4 @@ jobs:
       - uses: preactjs/compressed-size-action@v2
         with:
           pattern: "index.{js,d.ts}"
+          compression: none
