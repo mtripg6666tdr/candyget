@@ -491,6 +491,19 @@ describe("CandyGet Tests", function(){
         });
       });
     });
+
+    describe("#Body", function(){
+      it("Status code is ok", async function(){
+        const scope = nock(nockUrl())
+          .post("/post", "some big content")
+          .reply(200, "ok");
+        const result = await candyget(nockUrl("/post"), "string", {
+          body: "some big content"
+        });
+        scope.done();
+        assert.equal(result.body, "ok");
+      });
+    });
   });
 
   describe("#DefaultOptions", function(){

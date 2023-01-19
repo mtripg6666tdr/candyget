@@ -61,8 +61,9 @@ Make http(s) request to the given url and return its result.
   * `agent` - `http.Agent` to pass `http.request`.
   * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
+  * `body` - a `string` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.
   * All these properties are optional; passing `null` or `undefined` as `options` equals passing `{}`.
-* `body` can be a `string` or a plain object (with no cyclic reference).
+* `body` can be a `string` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
 
 `candyget` returns promise. When no-http errors such as network errors occur, the promise will be rejected.  
 The promise will be resolved as an object, which has the following properties:
