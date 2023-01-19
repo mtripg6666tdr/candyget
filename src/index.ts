@@ -32,6 +32,11 @@ type Opts = {
    * represents max number of redirects that candyget handles
    */
   maxRedirects?:number,
+  /**
+   * Request body
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body?:any,
 };
 
 interface BodyTypes {
@@ -138,7 +143,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     url = objurl;
     returnType = returnTypeOrUrl as T;
     overrideOptions = optionsOrReturnType as Opts || {};
-    body = bodyOrOptions as Body|null;
+    body = bodyOrOptions || overrideOptions.body as Body|null;
     // determine method automatically
     method = body ? "POST" : "GET";
   }
@@ -149,7 +154,7 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
     url = isString(returnTypeOrUrl) ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
     returnType = optionsOrReturnType as T;
     overrideOptions = bodyOrOptions as Opts || {};
-    body = rawBody || null;
+    body = rawBody || overrideOptions.body || null;
   }
   // validate params (not strictly)
   if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
@@ -274,7 +279,7 @@ candyget.defaultOptions = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
   } as {[key:string]:string},
   maxRedirects: 10,
-} as Opts;
+} as Omit<Opts, "body">;
 
 BodyTypesSet.map((type) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
