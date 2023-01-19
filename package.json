@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha -- --require ts-node/register test/*.ts",
     "coverage": "nyc -r=html -r=text npm test",
-    "build": "swc src -d .&&tsc&&node dts-minify",
+    "build": "swc src -d .&&tsc",
     "lint": "eslint ."
   },
   "keywords": [
@@ -42,7 +42,6 @@
     "@typescript-eslint/eslint-plugin": "^5.47.1",
     "@typescript-eslint/parser": "^5.47.1",
     "chai": "^4.3.7",
-    "dts-minify": "^0.3.0",
     "eslint": "^8.30.0",
     "eslint-plugin-destructuring-import-spacing": "^1.0.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
