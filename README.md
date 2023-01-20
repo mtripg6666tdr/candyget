@@ -43,7 +43,7 @@ candyget.defaultOptions.headers["Custom-Header"] = "foo";
 
 ## API
 API documentation is separated from README so that the npm bundle size gets smaller.
-See [API documentation site]().
+See [API documentation site](https://web.usamyon.moe/candyget/).
 
 ## License
 [MIT](LICENSE)

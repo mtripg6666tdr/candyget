@@ -21,6 +21,8 @@ If you want to specify the other method you can use:
 
 ### candyget(method, url, returnType, options?, body?)
 
+[**View these functions in documentation**](https://web.usamyon.moe/candyget/functions/candyget.html)
+
 Make http(s) request to the given url and return its result.  
 * `url` can be a `string` or a `URL` object.
 * `returnType` can be either of the followings:
@@ -61,6 +63,8 @@ Otherwise the promise will be resolved as an object, which has the following pro
 You can override this to change the default options (except a `body` property), which are used by candyget.
 
 ### Shorthand functions
+
+[**View these functions in documentation**](https://web.usamyon.moe/candyget/types/CGExport.html)
 
 #### By return types
 
