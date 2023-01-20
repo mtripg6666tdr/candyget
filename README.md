@@ -76,7 +76,7 @@ The promise will be resolved as an object, which has the following properties:
 
 ### candyget.defaultOptions
 
-You can override this to change the default options, which are used by candyget.
+You can override this to change the default options (except a `body` property), which are used by candyget.
 
 ### Shorthand functions
 
