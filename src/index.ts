@@ -91,6 +91,9 @@ const destroy = (...destroyable:{destroyed:boolean, destroy:()=>void}[]) => dest
   if(!stream.destroyed) stream.destroy();
 });
 
+/**
+ * Represents candyget's result type.
+ */
 type CGPromiseInner<T extends keyof BodyTypes> = {
   statusCode:number,
   headers:IncomingHttpHeaders,
@@ -99,9 +102,10 @@ type CGPromiseInner<T extends keyof BodyTypes> = {
   response:IncomingMessage,
   url:URL,
 };
+/**
+ * Represents the promise that will be resolved as candyget's result type.
+ */
 type CGReturn<T extends keyof BodyTypes> = Promise<CGPromiseInner<T>>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ShortenCG<T extends keyof BodyTypes> = (url:Url, options?:Opts, body?:any) => CGReturn<T>;
 type CGExport = typeof candyget & {
   /**
    * Default options used in candyget, which can be overwritten by the argument of candyget
@@ -109,24 +113,105 @@ type CGExport = typeof candyget & {
   defaultOptions:Omit<Opts, "body">,
   /**
    * Shorthand of candyget(url, "string")
+   * @param url URL
+   * @param options the request options
+   * @param body the response body
    */
-  string:ShortenCG<"string">,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  string(url:Url, options?:Opts|null, body?:any):CGReturn<"string">,
   /**
    * Shorthand of candyget(url, "buffer")
+   * @param url URL
+   * @param options the request options
+   * @param body the response body
    */
-  buffer:ShortenCG<"buffer">,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  buffer(url:Url, options?:Opts|null, body?:any):CGReturn<"buffer">,
   /**
    * Shorthand of candyget(url, "stream")
+   * @param url URL
+   * @param options the request options
+   * @param body the response body
    */
-  stream:ShortenCG<"stream">,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stream(url:Url, options?:Opts|null, body?:any):CGReturn<"stream">,
   /**
    * Shorthand of candyget(url, "json")
+   * @param url URL
+   * @param options the request options
+   * @param body the response body
    */
-  json:ShortenCG<"json">,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json(url:Url, options?:Opts|null, body?:any):CGReturn<"json">,
   /**
    * Shorthand of candyget(url, "emtpy")
+   * @param url URL
+   * @param options the request options
+   * @param body the response body
    */
-  empty:ShortenCG<"empty">,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  empty(url:Url, options?:Opts|null, body?:any):CGReturn<"empty">,
+  /**
+   * Shorthand of candyget("GET", url, returnType, options)
+   * @param url URL
+   * @param returnType the type of the response body that will be included in the result.
+   * @param options the request options
+   */
+  get<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null): CGReturn<T>,
+  /**
+   * Shorthand of candyget("HEAD", url, "empty", options)
+   * @param url URL
+   * @param options the request options
+   */
+  head(url:Url, options?:Opts):CGReturn<"empty">,
+  /**
+   * Shorthand of candyget("POST", url, returnType, options, body)
+   * @param url URL
+   * @param returnType the type of the response body that will be included in the result.
+   * @param options the request options
+   * @param body the request body
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  post<T extends keyof BodyTypes>(url:Url, returnType:T, options:Opts|null, body:any):CGReturn<T>,
+  /**
+   * Shorthand of candyget("PUT", url, "empty", options, body)
+   * @param url URL
+   * @param options the request options
+   * @param body the request body
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  put(url:Url, options:Opts|null, body:any):CGReturn<"empty">,
+  /**
+   * Shorthand of candyget("DELETE", url, returnType, options, body)
+   * @param url URL
+   * @param returnType the type of the response body that will be included in the result.
+   * @param options the request options
+   * @param body the request body
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null, body?:any):CGReturn<T>,
+  /**
+   * Shorthand of candyget("OPTIONS", url, returnType, options)
+   * @param url URL
+   * @param returnType the type of the response body that will be included in the result.
+   * @param options the request options
+   */
+  options<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null):CGReturn<T>,
+  /**
+   * Shorthand of candyget("TRACE", url, "empty", options)
+   * @param url URL
+   * @param options the request options
+   */
+  trace(url:Url, options?:Opts|null):CGReturn<"empty">,
+  /**
+   * Shorthand of candyget("PATCH", url, returnType, options, body)
+   * @param url URL
+   * @param returnType the type of the response body that will be included in the result.
+   * @param options the request options
+   * @param body the request body
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  patch<T extends keyof BodyTypes>(url:Url, returnType:T, options:Opts|null, body:any):CGReturn<T>,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -281,6 +366,7 @@ candyget.defaultOptions = {
   maxRedirects: 10,
 } as Omit<Opts, "body">;
 
+// setup shorthand
 BodyTypesSet.map((type) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (candyget as CGExport)[type] = function(url:Url, options?:Opts, body?:any){
@@ -288,5 +374,15 @@ BodyTypesSet.map((type) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 });
+
+const candygetType = candyget as CGExport;
+candygetType.get = (url, returnType, options?) => candygetType(url, returnType, options);
+candygetType.head = (url, options?) => candygetType("HEAD", url, "empty", options);
+candygetType.post = (url, returnType, options, body) => candygetType("POST", url, returnType, options, body);
+candygetType.put = (url, options, body) => candygetType("PUT", url, "empty", options, body);
+candygetType.delete = (url, returnType, options?, body?) => candygetType("DELETE", url, returnType, options, body);
+candygetType.options = (url, returnType, options?) => candygetType("OPTIONS", url, returnType, options);
+candygetType.trace = (url, options?) => candygetType("TRACE", url, "empty", options);
+candygetType.patch = (url, returnType, options, body) => candygetType("PATCH", url, returnType, options, body);
 
 export = Object.freeze(candyget) as CGExport;
