@@ -1,0 +1,11 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "./src/index.temp.ts"
+  ],
+  "out": "docs",
+  "readme": "./README.docs.md",
+  "plugin": [
+    "./plugins/expand-type-aliases.js"
+  ]
+}

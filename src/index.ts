@@ -151,6 +151,9 @@ type CGTypedResult<T extends keyof TypedBodyTypes<U>, U> = Omit<CGResult<T>, "bo
   body: TypedBodyTypes<U>[T];
 };
 
+/**
+ * CandyGet, a small HTTP(S) library
+ */
 type CGExport = typeof candyget & {
   /**
    * Default options used in candyget, which can be overwritten by the argument of candyget
@@ -290,6 +293,13 @@ type CGExport = typeof candyget & {
   patch<T extends keyof BodyTypes>(url:Url, returnType:T, options:OmitBody<Opts>|null, body:any):Promise<CGResult<T>>,
 };
 
+/**
+ * Make http(s) request to the given url and return its result.
+ * @param url URL
+ * @param returnType the type of the `body` in the result
+ * @param options Request options
+ * @param body the request body
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function candyget<U>(url:Url, returnType:"json", options?:TypedOpts<U>, body?:any):Promise<CGTypedResult<"json", U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

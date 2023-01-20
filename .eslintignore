@@ -2,8 +2,10 @@ index.d.ts
 index.js
 test
 example.js
-dts-minify.js
+prepare-docs.js
 coverage
 .nyc_output
 *.temp.*
 *.tmp.*
+docs
+plugins/*
