@@ -617,6 +617,167 @@ describe("CandyGet Tests", function(){
         });
       });
     });
+
+    type TestStruct = {
+      num: number,
+      text: string,
+    };
+
+    describe("#Validator", function(){
+      it("body typed correctly", async function(){
+        const scope = nock(nockUrl())
+          .get("/get")
+          .reply(200, JSON.stringify({
+            num: 5,
+            text: "five"
+          }));
+        const result = await candyget<TestStruct>(nockUrl("/get"), "json", {
+          validator(responseBody):responseBody is TestStruct {
+            return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+          },
+        });
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.body.num, 5);
+        assert.equal(result.body.text, "five");
+      });
+
+      it("invalid typed body", async function(){
+        const scope = nock(nockUrl())
+          .get("/get")
+          .reply(200, JSON.stringify({
+            error: 1104
+          }));
+        await assert.rejects(candyget<TestStruct>(nockUrl("/get"), "json", {
+          validator(responseBody):responseBody is TestStruct {
+            return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+          },
+        }));
+        scope.done();
+      });
+
+      describe("#Shorthand functions", function(){
+        describe("#json", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .get("/get")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.json<TestStruct>(nockUrl("/get"), {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            });
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#get", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .get("/get")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.get<TestStruct>(nockUrl("/get"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            });
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#post", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .post("/post", "post content")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.post<TestStruct>(nockUrl("/post"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            }, "post content");
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#delete", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .delete("/delete", "post content")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.delete<TestStruct>(nockUrl("/delete"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            }, "post content");
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#options", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .options("/options")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.options<TestStruct>(nockUrl("/options"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            });
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#patch", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .patch("/patch", "patch content")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.patch<TestStruct>(nockUrl("/patch"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            }, "patch content");
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+      });
+    });
   });
 
   describe("#DefaultOptions", function(){
