@@ -109,5 +109,25 @@ candyget.head(URL, RETURN_TYPE,  OPTIONS, BODY);
 ```
 Note that by using these shorthand functions TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
 
+## Response body validation (for TypeScript users)
+
+If you specify `json` as the return type, you will get the body property in your result typed `any`.
+Here if you specify `validator` property in the options, the response body will be typed correctly.
+
+```ts
+type resultType = {
+  data:string,
+}
+
+const result = await candyget.get<resultType>("https://your.site/great/content", "json", {
+  validator(responseBody): responseBody is resultType {
+    return typeof responseBody.data === "string";
+  },
+});
+console.log(result.body);
+```
+
+It's good you write your custom validation function with or without your favorite schema validator such as `ajv`, `zod` and so on in the `validator` option.
+
 ## License
 [MIT](LICENSE)
