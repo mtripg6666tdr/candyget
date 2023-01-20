@@ -501,7 +501,20 @@ describe("CandyGet Tests", function(){
           body: "some big content"
         });
         scope.done();
-        assert.equal(result.body, "ok");
+        assert.equal(result.statusCode, 200);
+      });
+
+      describe("override body params", function(){
+        it("Status code is ok", async function(){
+          const scope = nock(nockUrl())
+            .post("/post", "some big content")
+            .reply(200, "ok");
+          const result = await candyget(nockUrl("/post"), "string", {
+            body: "some wrong content",
+          }, "some big content");
+          scope.done();
+          assert.equal(result.statusCode, 200);
+        });
       });
     });
   });
