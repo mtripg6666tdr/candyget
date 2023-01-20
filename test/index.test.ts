@@ -511,9 +511,7 @@ describe("CandyGet Tests", function(){
             .reply(200, "ok");
           const result = await candyget(nockUrl("/post"), "string", {
             body: "some wrong content",
-          }, {
-            body: "some big content",
-          });
+          }, "some big content");
           scope.done();
           assert.equal(result.statusCode, 200);
         });
