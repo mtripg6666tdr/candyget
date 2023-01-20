@@ -247,8 +247,8 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
   if(!(url instanceof URL)) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
-  const options = Object.assign(createEmpty(), candyget.defaultOptions, overrideOptions);
-  const headers = Object.assign(createEmpty(), candyget.defaultOptions.headers, overrideOptions.headers);
+  const options = Object.assign(createEmpty(), (candyget as CGExport).defaultOptions, overrideOptions);
+  const headers = Object.assign(createEmpty(), (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
   // once clear headers
   options.headers = createEmpty();
   // assign headers with keys in lower case
@@ -356,16 +356,6 @@ function candyget<T extends keyof BodyTypes>(urlOrMethod:Url|HttpMethods, return
   return executeRequest(url);
 }
 
-candyget.defaultOptions = {
-  timeout: 10000,
-  headers: {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-  } as {[key:string]:string},
-  maxRedirects: 10,
-} as Omit<Opts, "body">;
-
 // setup shorthand
 BodyTypesSet.map((type) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -376,13 +366,23 @@ BodyTypesSet.map((type) => {
 });
 
 const candygetType = candyget as CGExport;
-candygetType.get = (url, returnType, options?) => candygetType(url, returnType, options);
-candygetType.head = (url, options?) => candygetType("HEAD", url, "empty", options);
-candygetType.post = (url, returnType, options, body) => candygetType("POST", url, returnType, options, body);
-candygetType.put = (url, options, body) => candygetType("PUT", url, "empty", options, body);
-candygetType.delete = (url, returnType, options?, body?) => candygetType("DELETE", url, returnType, options, body);
-candygetType.options = (url, returnType, options?) => candygetType("OPTIONS", url, returnType, options);
-candygetType.trace = (url, options?) => candygetType("TRACE", url, "empty", options);
-candygetType.patch = (url, returnType, options, body) => candygetType("PATCH", url, returnType, options, body);
+candygetType.get = (url, returnType, options?) => candyget(url, returnType, options);
+candygetType.head = (url, options?) => candyget("HEAD", url, "empty", options);
+candygetType.post = (url, returnType, options, body) => candyget("POST", url, returnType, options, body);
+candygetType.put = (url, options, body) => candyget("PUT", url, "empty", options, body);
+candygetType.delete = (url, returnType, options?, body?) => candyget("DELETE", url, returnType, options, body);
+candygetType.options = (url, returnType, options?) => candyget("OPTIONS", url, returnType, options);
+candygetType.trace = (url, options?) => candyget("TRACE", url, "empty", options);
+candygetType.patch = (url, returnType, options, body) => candyget("PATCH", url, returnType, options, body);
+
+candygetType.defaultOptions = {
+  timeout: 10000,
+  headers: {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+  } as {[key:string]:string},
+  maxRedirects: 10,
+};
 
 export = Object.freeze(candyget) as CGExport;
