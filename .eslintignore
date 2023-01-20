@@ -5,3 +5,5 @@ example.js
 dts-minify.js
 coverage
 .nyc_output
+*.temp.*
+*.tmp.*
