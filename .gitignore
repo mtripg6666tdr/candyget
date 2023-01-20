@@ -3,3 +3,5 @@ index.js
 index.d.ts
 coverage
 .nyc_output
+*.temp.*
+*.tmp.*

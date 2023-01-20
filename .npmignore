@@ -10,3 +10,5 @@ dts-minify.js
 coverage
 .nyc_output
 .gds
+*.temp.*
+*.tmp.*

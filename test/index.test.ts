@@ -18,6 +18,13 @@ function sha256Checksum(buf:Buffer|string){
   return crypto.createHash('sha256').update(buf).digest();
 }
 
+function genErrorObject(message:string){
+  return {
+    message,
+    name: "CandyGetError"
+  };
+}
+
 const JQUERY_HASH = "A6F3F0FAEA4B3D48E03176341BEF0ED3151FFBF226D4C6635F1C6039C0500575";
 const VSCODE_PNG_HASH = "E7A0F94AF1BFF6E01E6A4C0C6297F2B2D3E1F7BAEDE6C98143E33728DBDA5ED0";
 
@@ -507,7 +514,8 @@ describe("CandyGet Tests", function(){
           .reply(200, "foo");
         await assert.rejects(candyget(nockUrl("/get"), "string", {
           timeout: 500
-        })).then(() => scope.done());
+        }), genErrorObject("timed out"));
+        scope.done();
       });
     });
   
@@ -586,7 +594,7 @@ describe("CandyGet Tests", function(){
           const scope = nock(nockUrl())
             .get("/redirect")
             .reply(302, "redirected");
-          await assert.rejects(candyget(nockUrl("/redirect"), "string"));
+          await assert.rejects(candyget(nockUrl("/redirect"), "string"), genErrorObject("no location header found"));
           scope.done();
         });
       });
@@ -614,6 +622,167 @@ describe("CandyGet Tests", function(){
           }, "some big content");
           scope.done();
           assert.equal(result.statusCode, 200);
+        });
+      });
+    });
+
+    type TestStruct = {
+      num: number,
+      text: string,
+    };
+
+    describe("#Validator", function(){
+      it("body typed correctly", async function(){
+        const scope = nock(nockUrl())
+          .get("/get")
+          .reply(200, JSON.stringify({
+            num: 5,
+            text: "five"
+          }));
+        const result = await candyget<TestStruct>(nockUrl("/get"), "json", {
+          validator(responseBody):responseBody is TestStruct {
+            return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+          },
+        });
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.body.num, 5);
+        assert.equal(result.body.text, "five");
+      });
+
+      it("invalid typed body", async function(){
+        const scope = nock(nockUrl())
+          .get("/get")
+          .reply(200, JSON.stringify({
+            error: 1104
+          }));
+        await assert.rejects(candyget<TestStruct>(nockUrl("/get"), "json", {
+          validator(responseBody):responseBody is TestStruct {
+            return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+          },
+        }), genErrorObject("invalid response body"));
+        scope.done();
+      });
+
+      describe("#Shorthand functions", function(){
+        describe("#json", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .get("/get")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.json<TestStruct>(nockUrl("/get"), {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            });
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#get", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .get("/get")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.get<TestStruct>(nockUrl("/get"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            });
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#post", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .post("/post", "post content")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.post<TestStruct>(nockUrl("/post"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            }, "post content");
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#delete", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .delete("/delete", "post content")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.delete<TestStruct>(nockUrl("/delete"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            }, "post content");
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#options", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .options("/options")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.options<TestStruct>(nockUrl("/options"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            });
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
+        });
+
+        describe("#patch", function(){
+          it("typed body is fine", async function(){
+            const scope = nock(nockUrl())
+              .patch("/patch", "patch content")
+              .reply(200, JSON.stringify({
+                num: 5,
+                text: "five"
+              }));
+            const result = await candyget.patch<TestStruct>(nockUrl("/patch"), "json", {
+              validator(responseBody):responseBody is TestStruct {
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+              },
+            }, "patch content");
+            scope.done();
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.num, 5);
+            assert.equal(result.body.text, "five");
+          });
         });
       });
     });
@@ -652,7 +821,8 @@ describe("CandyGet Tests", function(){
           .get("/get")
           .delay(1000)
           .reply(200, "foo");
-        await assert.rejects(candyget(nockUrl("/get"), "string")).then(() => scope.done());
+        await assert.rejects(candyget(nockUrl("/get"), "string"), genErrorObject("timed out"));
+        scope.done();
       });
     });
   
@@ -678,98 +848,104 @@ describe("CandyGet Tests", function(){
   describe("#Invalid Params", function(){
     describe("#Method", function(){
       it("Error", async function(){
-        assert.rejects(candyget("INVALID_METHOD" as unknown as "GET", "http://example.com", "empty"));
+        await assert.rejects(candyget("INVALID_METHOD" as unknown as "GET", "http://example.com", "empty"), genErrorObject("Invalid Param:method"));
       });
     });
 
     describe("#URL (invalid path)", function(){
       it("Error", async function(){
-        assert.rejects(candyget("file:///path/to/file.txt", "stream"));
+        await assert.rejects(candyget("file:///path/to/file.txt", "stream"), genErrorObject("Invalid Param:url"));
       });
     });
 
     describe("#URL (invalid path, with method)", function(){
       it("Error", async function(){
-        assert.rejects(candyget("GET", "file:///path/to/file.txt", "stream"));
+        await assert.rejects(candyget("GET", "file:///path/to/file.txt", "stream"), genErrorObject("Invalid Param:url"));
       });
     });
 
     describe("#URL (invalid object)", function(){
       it("Error", async function(){
-        assert.rejects(candyget(new (class NotUrl {})() as unknown as URL, "stream"));
+        await assert.rejects(candyget(new (class NotUrl {})() as unknown as URL, "stream"), genErrorObject("Invalid Param:url"));
       });
     });
 
     describe("#URL (invalid object, with method)", function(){
       it("Error", async function(){
-        assert.rejects(candyget("GET", new (class NotUrl {})() as unknown as URL, "stream"));
+        await assert.rejects(candyget("GET", new (class NotUrl {})() as unknown as URL, "stream"), genErrorObject("Invalid Param:url"));
       });
     });
 
     describe("#Return Type", function(){
       it("Error", async function(){
-        assert.rejects(candyget("https://example.com", "foo" as unknown as "string"));
+        await assert.rejects(candyget("https://example.com", "foo" as unknown as "string"), genErrorObject("Invalid Param:returnType"));
       });
     });
 
     describe("#Return Type (with method)", function(){
       it("Error", async function(){
-        assert.rejects(candyget("GET", "https://example.com", "foo" as unknown as "string"));
+        await assert.rejects(candyget("GET", "https://example.com", "foo" as unknown as "string"), genErrorObject("Invalid Param:returnType"));
       });
     });
 
     describe("#Options", function(){
       it("Error", async function(){
-        assert.rejects(candyget("https://example.com", "string", Symbol.for("invalid object") as unknown as {}))
+        await assert.rejects(
+          candyget("https://example.com", "string", Symbol.for("invalid object") as unknown as {}),
+          genErrorObject("Invalid Param:options")
+        );
       });
 
       it("Error (with method)", async function(){
-        assert.rejects(candyget("GET", "https://example.com", "string", Symbol.for("invalid object") as unknown as {}))
+        await assert.rejects(
+          candyget("GET", "https://example.com", "string", Symbol.for("invalid object") as unknown as {}),
+          genErrorObject("Invalid Param:options")
+        );
       });
 
       describe("timeout", function(){
         it("not a number type; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             timeout: "foo" as unknown as number,
-          }));
+          }), genErrorObject("Invalid Param:timeout"));
         });
 
         it("minus number; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             timeout: -10,
-          }));
+          }), genErrorObject("Invalid Param:timeout"));
         });
 
         it("zero; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             timeout: 0,
-          }));
+          }), genErrorObject("Invalid Param:timeout"));
         });
 
         it("NaN; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             timeout: NaN,
-          }));
+          }), genErrorObject("Invalid Param:timeout"));
         });
       });
 
       describe("maxRedirects", function(){
         it("not a number type; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             maxRedirects: "foo" as unknown as number,
-          }));
+          }), genErrorObject("Invalid Param:maxRedirects"));
         });
 
         it("minus number; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             maxRedirects: -10,
-          }));
+          }), genErrorObject("Invalid Param:maxRedirects"));
         });
 
         it("NaN; Error", async function(){
-          assert.rejects(candyget("https://example.com", "string", {
+          await assert.rejects(candyget("https://example.com", "string", {
             maxRedirects: NaN,
-          }));
+          }), genErrorObject("Invalid Param:maxRedirects"));
         });
       })
     })

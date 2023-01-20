@@ -1,9 +1,11 @@
 # candyget
 [![npm](https://img.shields.io/npm/v/candyget)](https://www.npmjs.com/package/candyget)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/candyget)
+
+> **Warning**
 > This project is still in a development phase.
 
-candyget is a small sized http(s) client for Node.js
+candyget is a small sized HTTP(S) client for Node.js
 
 ## Features
 
@@ -62,11 +64,19 @@ Make http(s) request to the given url and return its result.
   * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
   * `body` - a `string` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.
-  * All these properties are optional; passing `null` or `undefined` as `options` equals passing `{}`.
+  * `validator` - a `function` to validate if the response body has the expected type. See [below](#response-body-validation-for-typescript-users) for more info.
+  
+  > All these properties are optional in most cases.  
+  > Passing `null` or `undefined` as `options` equals passing `{}`.  
 * `body` can be a `string` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
 
-`candyget` returns promise. When no-http errors such as network errors occur, the promise will be rejected.  
-The promise will be resolved as an object, which has the following properties:
+`candyget` returns a promise.
+When no-http errors such as network errors occur, the promise will be rejected.
+
+> **Warning**
+> If you specify `options.validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
+
+Otherwise the promise will be resolved as an object, which has the following properties:
 * `statusCode` - HTTP status code
 * `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
 * `body` - response body, type of which is what you specified.
@@ -80,7 +90,9 @@ You can override this to change the default options (except a `body` property), 
 
 ### Shorthand functions
 
-You can use shorthand functions instead of passing the return type as a second parameter.
+#### By return types
+
+You can use shorthand functions instead of passing the return type as a parameter.
 ```js
 candyget(URL, "string");
 // equals
@@ -90,7 +102,43 @@ candyget(URL, "json", OPTIONS, BODY);
 // equals
 candyget.json(URL, OPTIONS, BODY);
 ```
-Note that you cannot specify a HTTP method if you use shorthand functions. They always infer the HTTP method.
+Note that you cannot specify a HTTP method if you use these shorthand functions. They always infer the HTTP method.
+
+#### By HTTP methods
+
+You can use shorthand functions instead of passing the http method as a parameter.
+
+```js
+candyget("GET", URL, RETURN_TYPE,  OPTIONS, BODY);
+// equals
+candyget.get(URL, RETURN_TYPE,  OPTIONS, BODY);
+
+candyget("HEAD", URL, RETURN_TYPE,  OPTIONS, BODY);
+// equals
+candyget.head(URL, RETURN_TYPE,  OPTIONS, BODY);
+```
+Note that by using these shorthand functions TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
+
+## Response body validation (for TypeScript users)
+
+If you specify `json` as the return type, you will get the body property in your result typed `any`.
+Here if you specify `validator` property in the options, the response body will be typed correctly.
+
+```ts
+type resultType = {
+  data:string,
+}
+
+const result = await candyget.get<resultType>("https://your.site/great/content", "json", {
+  validator(responseBody): responseBody is resultType {
+    return typeof responseBody.data === "string";
+  },
+});
+console.log(result.body);
+```
+
+It's good you write your custom validation function with or without your favorite schema validator such as `ajv`, `zod` and so on in the `validator` option.  
+Note that if you specify `validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
 
 ## License
 [MIT](LICENSE)
