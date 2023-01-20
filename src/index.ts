@@ -115,7 +115,12 @@ const CONTENT_TYPE = "content-type";
 /**
  * Represents errors emitted manually in candyget
  */
-class CandyGetError extends Error {}
+class CandyGetError extends Error {
+  constructor(message?:string){
+    super(message);
+    this.name = "CandyGetError";
+  }
+}
 const genInvalidParamMessage = (name:string) => `Invalid Param:${name}`;
 const genError = (message:string) => new CandyGetError(message);
 const genRejectedPromise = (message:string) => Promise.reject(genError(message));
@@ -408,7 +413,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
               if(returnType == "json"){
                 if("validator" in options && typeof options.validator === "function"){
                   body = JSON.parse(body);
-                  if(!options.validator(body)) reject("invalid response body");
+                  if(!options.validator(body)) reject(genError("invalid response body"));
                 }else{
                   try{
                     body = JSON.parse(body);
@@ -427,7 +432,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         }
       })
         ?.on("error", reject)
-        ?.on("timeout", () => reject("timed out"))
+        ?.on("timeout", () => reject(genError("timed out")))
       ;
       if(!req) reject(genError(genInvalidParamMessage("url")));
       req.end(body ? isString(body) ? body : JSON.stringify(body) : undefined);
