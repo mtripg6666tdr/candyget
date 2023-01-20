@@ -106,7 +106,7 @@ type CGExport = typeof candyget & {
   /**
    * Default options used in candyget, which can be overwritten by the argument of candyget
    */
-  defaultOptions:Opts,
+  defaultOptions:Omit<Opts, "body">,
   /**
    * Shorthand of candyget(url, "string")
    */
