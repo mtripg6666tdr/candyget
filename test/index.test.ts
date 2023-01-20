@@ -204,7 +204,7 @@ describe("CandyGet Tests", function(){
     });
   });
 
-  describe("#Shorthand", function(){
+  describe("#Shorthand functions", function(){
     describe("#String", function(){
       it("received body correctly", async function(){
         const scope = nock(nockUrl())
@@ -274,6 +274,106 @@ describe("CandyGet Tests", function(){
         scope.done();
         expect(result.body).is.a("null");
         expect(result.statusCode).equal(200);
+      });
+    });
+
+    describe("#Get", function(){
+      it("status code is ok, body is fine", async function(){
+        const scope = nock(nockUrl())
+          .get("/get")
+          .reply(200, "foo");
+        const result = await candyget.get(nockUrl("/get"), "string");
+        scope.done();
+        assert.equal(result.body, "foo");
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Head", function(){
+      it("status code is ok", async function(){
+        const scope = nock(nockUrl())
+          .head("/head")
+          .reply(200);
+        const result = await candyget.head(nockUrl("/head"));
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Post", function(){
+      it("status code is ok, body is fine", async function(){
+        const scope = nock(nockUrl())
+          .post("/post", JSON.stringify({
+            foo: "bar"
+          }))
+          .reply(200, "fine");
+        const result = await candyget.post(nockUrl("/post"), "string", {}, {
+          foo: "bar"
+        });
+        scope.done();
+        assert.equal(result.body, "fine");
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Put", function(){
+      it("status code is ok", async function(){
+        const scope = nock(nockUrl())
+          .put("/put", "PUT CONTENT")
+          .reply(200);
+        const result = await candyget.put(nockUrl("/put"), {}, "PUT CONTENT");
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Delete", function(){
+      it("status code is ok, body is fine", async function(){
+        const scope = nock(nockUrl())
+          .delete("/delete", "this is what to delete")
+          .reply(200, "ok");
+        const result = await candyget.delete(nockUrl("/delete"), "string", {}, "this is what to delete");
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.body, "ok");
+      });
+    });
+
+    describe("#Options", function(){
+      it("status code is ok, body is fine", async function(){
+        const scope = nock(nockUrl())
+          .options("/options")
+          .reply(200, "finefinefine");
+        const result = await candyget.options(nockUrl("/options"), "string");
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.body, "finefinefine");
+      });
+    });
+
+    describe("#Trace", function(){
+      it("status code is ok", async function(){
+        const scope = nock(nockUrl())
+          .intercept("/trace", "TRACE")
+          .reply(200, undefined, {
+            "Content-Type": "message/http"
+          });
+        const result = await candyget.trace(nockUrl("/trace"));
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.headers["content-type"], "message/http");
+      });
+    });
+
+    describe("#Patch", function(){
+      it("status code is ok, body is fine", async function(){
+        const scope = nock(nockUrl())
+          .patch("/patch", "this is correct")
+          .reply(200, "correct content");
+        const result = await candyget.patch(nockUrl("/patch"), "string", {}, "this is correct");
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.body, "correct content");
       });
     });
   });
