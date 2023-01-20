@@ -3,7 +3,7 @@
 ![npm bundle size](https://img.shields.io/bundlephobia/min/candyget)
 > This project is still in a development phase.
 
-candyget is a small sized http(s) client for Node.js
+candyget is a small sized HTTP(S) client for Node.js
 
 ## Features
 
@@ -80,7 +80,9 @@ You can override this to change the default options (except a `body` property), 
 
 ### Shorthand functions
 
-You can use shorthand functions instead of passing the return type as a second parameter.
+#### By return types
+
+You can use shorthand functions instead of passing the return type as a parameter.
 ```js
 candyget(URL, "string");
 // equals
@@ -90,7 +92,22 @@ candyget(URL, "json", OPTIONS, BODY);
 // equals
 candyget.json(URL, OPTIONS, BODY);
 ```
-Note that you cannot specify a HTTP method if you use shorthand functions. They always infer the HTTP method.
+Note that you cannot specify a HTTP method if you use these shorthand functions. They always infer the HTTP method.
+
+#### By HTTP methods
+
+You can use shorthand functions instead of passing the http method as a parameter.
+
+```js
+candyget("GET", URL, RETURN_TYPE,  OPTIONS, BODY);
+// equals
+candyget.get(URL, RETURN_TYPE,  OPTIONS, BODY);
+
+candyget("HEAD", URL, RETURN_TYPE,  OPTIONS, BODY);
+// equals
+candyget.head(URL, RETURN_TYPE,  OPTIONS, BODY);
+```
+Note that by using these shorthand functions TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
 
 ## License
 [MIT](LICENSE)
