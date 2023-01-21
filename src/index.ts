@@ -358,7 +358,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         timeout: options.timeout,
         agent: options.agent,
       }, (res) => {
-        const statusCode = res.statusCode as number;
+        const statusCode = res.statusCode!;
         if(redirectCount < options.maxRedirects! && redirectStatuses.includes(statusCode)){
           const redirectTo = res.headers.location;
           if(isString(redirectTo)){
@@ -406,7 +406,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         }else{
           let bufs:Buffer[]|null = [];
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
-            .on("data", buf => (bufs as Buffer[]).push(buf))
+            .on("data", buf => bufs!.push(buf))
             .on("end", () => {
               destroy(req, res);
               const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
