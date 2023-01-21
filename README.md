@@ -18,6 +18,7 @@ candyget is a small sized HTTP(S) client for Node.js
       - [By return types](#by-return-types)
       - [By HTTP methods](#by-http-methods)
   - [Response body validation (for TypeScript users)](#response-body-validation-for-typescript-users)
+  - [For TypeScript users](#for-typescript-users)
   - [License](#license)
 
 ## Features
@@ -76,12 +77,12 @@ Make http(s) request to the given url and return its result.
   * `agent` - `http.Agent` to pass `http.request`.
   * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
-  * `body` - a `string` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.
+  * `body` - a `string`, `Buffer`, `Stream` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.
   * `validator` - a `function` to validate if the response body has the expected type. See [below](#response-body-validation-for-typescript-users) for more info.
   
   > All these properties are optional in most cases.  
   > Passing `null` or `undefined` as `options` equals passing `{}`.  
-* `body` can be a `string` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
+* `body` can be a `string`, `Buffer`, `Stream` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
 
 `candyget` returns a promise.
 When no-http errors such as network errors occur, the promise will be rejected.
@@ -152,6 +153,9 @@ console.log(result.body);
 
 It's good you write your custom validation function with or without your favorite schema validator such as `ajv`, `zod` and so on in the `validator` option.  
 Note that if you specify `validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
+
+## For TypeScript users
+Due to complex overloads, sometimes TypeScript marks as an error the different location, not the actual wrong location. In this situation, make sure that your arguments are passed correctly (e.g. the duplicated request body or arguments order). Even so if you think it's a bug, feel free to create new issue.
 
 ## License
 [MIT](LICENSE)
