@@ -5,7 +5,7 @@ import type { Readable, TransformOptions } from "stream";
 const requireLocal = require;
 const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
-const { PassThrough, pipeline } = requireLocal("stream") as typeof import("stream");
+const { PassThrough, pipeline, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
 
 /**
@@ -126,6 +126,8 @@ const genError = (message:string) => new CandyGetError(message);
 const genRejectedPromise = (message:string) => Promise.reject(genError(message));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
 const noop = () => {/* empty */};
 const createEmpty = () => Object.create(null) as EmptyObject;
 const destroy = (...destroyable:{destroyed?:boolean, destroy:()=>void}[]) => destroyable.map(stream => {
@@ -334,7 +336,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // assign headers with keys in lower case
   Object.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
   // if json was passed and content-type is not set, set automatically
-  if(!isString(body) && !options.headers[CONTENT_TYPE]){
+  if(!isString(body) && !isObjectType(body, Buffer) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
   if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
@@ -435,7 +437,19 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         ?.on("timeout", () => reject(genError("timed out")))
       ;
       if(!req) reject(genError(genInvalidParamMessage("url")));
-      req.end(body ? isString(body) ? body : JSON.stringify(body) : undefined);
+      if(body && body instanceof Stream){
+        body
+          .on("error", reject)
+          .pipe(req);
+      }else{
+        req.end(
+          !body
+          ? undefined
+          : isString(body) || isObjectType(body, Buffer)
+          ? body
+          : JSON.stringify(body)
+        );
+      }
     });
   };
   return executeRequest(url);
