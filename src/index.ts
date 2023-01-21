@@ -5,7 +5,7 @@ import type { Readable, TransformOptions } from "stream";
 const requireLocal = require;
 const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
-const { PassThrough, pipeline } = requireLocal("stream") as typeof import("stream");
+const { PassThrough, pipeline, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
 
 /**
@@ -99,9 +99,9 @@ type TypedBodyTypes<U> = Omit<BodyTypes, "json"> & {
   json: U,
 };
 
-const BodyTypesSet:Readonly<(keyof BodyTypes)[]> = ["string", "buffer", "stream", "json", "empty"];
+const BodyTypesSet = ["string", "buffer", "stream", "json", "empty"] as const;
 type HttpMethods = "GET"|"HEAD"|"POST"|"PUT"|"DELETE"|"OPTIONS"|"TRACE"|"PATCH";
-const HttpMethodsSet:Readonly<HttpMethods[]> = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "TRACE", "PATCH"];
+const HttpMethodsSet = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "TRACE", "PATCH"] as const;
 type Url = string|URL;
 // eslint-disable-next-line @typescript-eslint/ban-types
 type EmptyObject = {};
@@ -111,6 +111,9 @@ const HttpLibs = {
 } as const;
 const redirectStatuses:Readonly<number[]> = [301, 302, 303, 307, 308];
 const CONTENT_TYPE = "content-type";
+const objectAlias = Object;
+const bufferAlias = Buffer;
+const jsonAlias = JSON;
 
 /**
  * Represents errors emitted manually in candyget
@@ -126,8 +129,10 @@ const genError = (message:string) => new CandyGetError(message);
 const genRejectedPromise = (message:string) => Promise.reject(genError(message));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
 const noop = () => {/* empty */};
-const createEmpty = () => Object.create(null) as EmptyObject;
+const createEmpty = () => objectAlias.create(null) as EmptyObject;
 const destroy = (...destroyable:{destroyed?:boolean, destroy:()=>void}[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
@@ -325,16 +330,16 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
   if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
   if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
-  if(!(url instanceof URL)) return genRejectedPromise(genInvalidParamMessage("url"));
+  if(!isObjectType(url, URL)) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
-  const options = Object.assign(createEmpty(), (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers = Object.assign(createEmpty(), (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
+  const options = objectAlias.assign(createEmpty(), (candyget as CGExport).defaultOptions, overrideOptions);
+  const headers = objectAlias.assign(createEmpty(), (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
   // once clear headers
   options.headers = createEmpty();
   // assign headers with keys in lower case
-  Object.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
+  objectAlias.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
   // if json was passed and content-type is not set, set automatically
-  if(!isString(body) && !options.headers[CONTENT_TYPE]){
+  if(!isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
   if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
@@ -356,7 +361,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         timeout: options.timeout,
         agent: options.agent,
       }, (res) => {
-        const statusCode = res.statusCode as number;
+        const statusCode = res.statusCode!;
         if(redirectCount < options.maxRedirects! && redirectStatuses.includes(statusCode)){
           const redirectTo = res.headers.location;
           if(isString(redirectTo)){
@@ -404,19 +409,19 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         }else{
           let bufs:Buffer[]|null = [];
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
-            .on("data", buf => (bufs as Buffer[]).push(buf))
+            .on("data", buf => bufs!.push(buf))
             .on("end", () => {
               destroy(req, res);
-              const result = Buffer.concat(bufs!) as unknown as BodyTypes[T];
+              const result = bufferAlias.concat(bufs!) as unknown as BodyTypes[T];
               const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
               let body = rawBody;
               if(returnType == "json"){
                 if("validator" in options && typeof options.validator === "function"){
-                  body = JSON.parse(body);
+                  body = jsonAlias.parse(body);
                   if(!options.validator(body)) reject(genError("invalid response body"));
                 }else{
                   try{
-                    body = JSON.parse(body);
+                    body = jsonAlias.parse(body);
                   }
                   catch{/* empty */}
                 }
@@ -435,7 +440,19 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         ?.on("timeout", () => reject(genError("timed out")))
       ;
       if(!req) reject(genError(genInvalidParamMessage("url")));
-      req.end(body ? isString(body) ? body : JSON.stringify(body) : undefined);
+      if(body && isObjectType(body, Stream)){
+        body
+          .on("error", reject)
+          .pipe(req);
+      }else{
+        req.end(
+          !body
+          ? undefined
+          : isString(body) || isObjectType(body, bufferAlias)
+          ? body
+          : jsonAlias.stringify(body)
+        );
+      }
     });
   };
   return executeRequest(url);
@@ -470,6 +487,9 @@ candygetType.defaultOptions = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
   } as {[key:string]:string},
   maxRedirects: 10,
+  transformerOptions: {
+    autoDestroy: true,
+  }
 };
 
-export = Object.freeze(candyget) as CGExport;
+export = objectAlias.freeze(candyget) as CGExport;
