@@ -125,7 +125,9 @@ describe("CandyGet Tests", function(){
     describe("#Stream", function(){
       it("status code is ok", async function(){
         const data = fs.readFileSync(path.join(__dirname, "./vscode.png"));
-        const stream = Readable.from(data);
+        const stream = Readable.from(data, {
+          autoDestroy: true,
+        });
         const scope = nock(nockUrl())
           .post("/post", data)
           .reply(200);
