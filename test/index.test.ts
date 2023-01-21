@@ -649,7 +649,7 @@ describe("CandyGet Tests", function(){
             .reply(200, "ok");
           const result = await candyget(nockUrl("/post"), "string", {
             body: "some wrong content",
-          }, "some big content");
+          } as {}, "some big content");
           scope.done();
           assert.equal(result.statusCode, 200);
         });
