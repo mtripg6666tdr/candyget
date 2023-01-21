@@ -109,13 +109,41 @@ describe("CandyGet Tests", function(){
     });
   });
 
-  describe("#Body", function(){
+  describe("#Request Body", function(){
+    describe("#Buffer", function(){
+      it("status code is ok", async function(){
+        const data = [0x46, 0x61, 0x76, 0x66, 0x96, 0xa5, 0xff, 0x0];
+        const scope = nock(nockUrl())
+          .post("/post", Buffer.from(data))
+          .reply(200);
+        const result = await candyget(nockUrl("/post"), "empty", {}, Buffer.from(data));
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Stream", function(){
+      it("status code is ok", async function(){
+        const data = fs.readFileSync(path.join(__dirname, "./vscode.png"));
+        const stream = Readable.from(data);
+        const scope = nock(nockUrl())
+          .post("/post", data)
+          .reply(200);
+        const result = await candyget(nockUrl("/post"), "empty", {}, stream);
+        scope.done();
+        assert.equal(result.statusCode, 200);
+        assert.equal(stream.destroyed, true);
+      });
+    });
+  });
+
+  describe("#Response Body", function(){
     describe("#Types", function(){
       describe("#String", function(){
         it("received body correctly", async function(){
           const scope = nock(nockUrl())
-          .get("/plain")
-          .reply(200, "foo bar");
+            .get("/plain")
+            .reply(200, "foo bar");
           const result = await candyget("GET", nockUrl("/plain"), "string");
           scope.done();
           assert.equal(result.body, "foo bar");
