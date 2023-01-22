@@ -12,3 +12,4 @@ coverage
 .gds
 *.temp.*
 *.tmp.*
+assets
