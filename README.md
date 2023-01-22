@@ -137,7 +137,7 @@ candyget("HEAD", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
 candyget.head(URL, RETURN_TYPE, OPTIONS, BODY);
 ```
-Note that by using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
+By using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
 
 ## Response body validation (for TypeScript users)
 
