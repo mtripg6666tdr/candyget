@@ -157,7 +157,7 @@ const result = await candyget.get<resultType>("https://your.site/great/content",
 console.log(result.body);
 ```
 
-It's good you write your custom validation function with or without your favorite schema validator such as `ajv`, `zod` and so on in the `validator` option.  
+It is beneficial to write your custom validation function, with or without using a schema validator such as ajv or zod, in the validator option. 
 Note that if you specify `validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
 
 ## For TypeScript users
