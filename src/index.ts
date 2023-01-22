@@ -123,8 +123,6 @@ const genRejectedPromise = (message:string) => Promise.reject(genError(message))
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isNumber = ((target:any) => typeof target == "number") as (target:any) => target is number;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
 const noop = () => {/* empty */};
 const createEmpty = () => objectAlias.create(null) as EmptyObject;
@@ -348,8 +346,8 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(!isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
-  if(!isNumber(options.timeout) || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
-  if(!isNumber(options.maxRedirects) || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
+  if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
+  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
   // execute request
   let redirectCount = 0;
   // store the original url
