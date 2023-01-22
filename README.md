@@ -106,7 +106,8 @@ Otherwise the promise will be resolved as an object, which has the following pro
 
 ### candyget.defaultOptions
 
-You can override this to change the default options (except a `body` property), which are used by candyget.
+The default options (excluding the `body` property), which are used by candyget.
+It is possible to change candyget's default options globally by overriding it.
 
 ### Shorthand functions
 
