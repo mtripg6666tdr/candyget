@@ -5,6 +5,7 @@
   <a href="https://www.npmjs.com/package/candyget"><img src="https://img.shields.io/npm/v/candyget" alt="npm"></a>
   <a href="https://packagephobia.com/result?p=candyget"><img src="https://badgen.net/packagephobia/install/candyget"></a>
   <a href="https://github.com/mtripg6666tdr/candyget/actions/workflows/ci.yml"><img src="https://github.com/mtripg6666tdr/candyget/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://app.codecov.io/github/mtripg6666tdr/candyget"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/mtripg6666tdr/candyget"></a>
   <img alt="License" src="https://img.shields.io/npm/l/candyget">
 </div>
 
@@ -13,19 +14,18 @@
 > **Warning**
 > This project is still in a development phase.
 
-- [candyget](#candyget)
-  - [Features](#features)
-  - [Usage](#usage)
-  - [API](#api)
-    - [candyget(url, returnType, options?, body?)](#candygeturl-returntype-options-body)
-    - [candyget(method, url, returnType, options?, body?)](#candygetmethod-url-returntype-options-body)
-    - [candyget.defaultOptions](#candygetdefaultoptions)
-    - [Shorthand functions](#shorthand-functions)
-      - [By return types](#by-return-types)
-      - [By HTTP methods](#by-http-methods)
-  - [Response body validation (for TypeScript users)](#response-body-validation-for-typescript-users)
-  - [For TypeScript users](#for-typescript-users)
-  - [License](#license)
+- [Features](#features)
+- [Usage](#usage)
+- [API](#api)
+  - [candyget(url, returnType, options?, body?)](#candygeturl-returntype-options-body)
+  - [candyget(method, url, returnType, options?, body?)](#candygetmethod-url-returntype-options-body)
+  - [candyget.defaultOptions](#candygetdefaultoptions)
+  - [Shorthand functions](#shorthand-functions)
+    - [By return types](#by-return-types)
+    - [By HTTP methods](#by-http-methods)
+- [Response body validation (for TypeScript users)](#response-body-validation-for-typescript-users)
+- [For TypeScript users](#for-typescript-users)
+- [License](#license)
 
 ## Features
 
