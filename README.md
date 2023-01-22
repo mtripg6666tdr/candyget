@@ -63,11 +63,10 @@ candyget.defaultOptions.headers["Custom-Header"] = "foo";
 
 ## API
 ### candyget(url, returnType, options?, body?)
-
-`candyget` will automatically infer the method type; if `body` is present, it will infer as `POST`, otherwise it will infer as `GET`.  
-If you wish to specify a different method, you can use:
-
 ### candyget(method, url, returnType, options?, body?)
+Make HTTP(S) request to the specified URL and return the result.
+
+When no method provided, candyget will automatically infer the method type; if body is present, it will infer as `POST`, otherwise it will infer as `GET`.
 
 Make http(s) request to the given url and return its result.  
 * `url` can be a `string` or a `URL` object.
