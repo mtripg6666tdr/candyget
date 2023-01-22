@@ -146,7 +146,7 @@ If you specify `validator` property in the options, the response body will be ty
 
 ```ts
 type resultType = {
-  data:string,
+  data: string,
 }
 
 const result = await candyget.get<resultType>("https://your.site/great/content", "json", {
