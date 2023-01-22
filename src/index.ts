@@ -343,12 +343,12 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
   if(!isObjectType(url, URL)) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
-  const options = objectAlias.assign(createEmpty(), (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers = objectAlias.assign(createEmpty(), (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
+  const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
+  const headers = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
   // once clear headers
   options.headers = createEmpty();
   // assign headers with keys in lower case
-  objectAlias.keys(headers).map(key => options.headers![key.toLowerCase()] = headers[key]);
+  objectAlias.keys(headers).map(key => options.headers[key.toLowerCase()] = headers[key]);
   // if json was passed and content-type is not set, set automatically
   if(!isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
@@ -362,8 +362,8 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   const executeRequest = (requestUrl:URL) => {
     // delete credentials to prevent from leaking credentials
     if(redirectCount > 0 && originalUrl.host !== requestUrl.host){
-      delete options.headers!["cookie"];
-      delete options.headers!["authorization"];
+      delete options.headers["cookie"];
+      delete options.headers["authorization"];
     }
     return new Promise<CGResult<T>>((resolve, reject) => {
       const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs]?.request(requestUrl, {
@@ -373,7 +373,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         agent: options.agent,
       }, (res) => {
         const statusCode = res.statusCode!;
-        if(redirectCount < options.maxRedirects! && redirectStatuses.includes(statusCode)){
+        if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
           const redirectTo = res.headers.location;
           if(isString(redirectTo)){
             redirectCount++;
@@ -490,7 +490,7 @@ candygetType.trace = (url:Url, options?:Opts) => candyget("TRACE", url, "empty",
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 candygetType.patch = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options:TypedOpts<U>|Opts, body?:any) => candyget("PATCH", url, returnType, options, body);
 
-candygetType.defaultOptions = {
+const defaultOptions = {
   timeout: 10000,
   headers: {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -502,5 +502,7 @@ candygetType.defaultOptions = {
     autoDestroy: true,
   }
 };
+
+candygetType.defaultOptions = objectAlias.assign({}, defaultOptions);
 
 export = objectAlias.freeze(candyget) as CGExport;
