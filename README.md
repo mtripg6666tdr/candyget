@@ -141,8 +141,7 @@ Note that by using these shorthand functions, TypeScript users can benefit in ma
 
 ## Response body validation (for TypeScript users)
 
-If you specify `json` as the return type, you will get the body property in your result typed `any`.
-If you specify `validator` property in the options, the response body will be typed correctly.
+When you specify `json` as the return type, the `body` property in the result will be typed as `any`. However, if you include a `validator` property in the options, the response body will be correctly typed.
 
 ```ts
 type resultType = {
