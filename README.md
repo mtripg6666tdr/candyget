@@ -124,7 +124,7 @@ Please note that you cannot specify a HTTP method when using these shorthand fun
 
 #### By HTTP methods
 
-You can use shorthand functions instead of passing the http method as a parameter.
+Instead of passing the return type as a parameter, you can use shorthand functions.
 
 ```js
 candyget("GET", URL, RETURN_TYPE, OPTIONS, BODY);
@@ -135,7 +135,7 @@ candyget("HEAD", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
 candyget.head(URL, RETURN_TYPE, OPTIONS, BODY);
 ```
-By using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
+By using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post`, TypeScript will throw an error unless you specify the request body)
 
 ## Response body validation (for TypeScript users)
 
@@ -155,7 +155,7 @@ console.log(result.body);
 ```
 
 It is beneficial to write your custom validation function, with or without using a schema validator such as ajv or zod, in the validator option. 
-Note that if you specify a validator and the response body fails validation, the promise will be rejected even if there is no HTTP error.
+Please note that if you specify a validator and the response body fails validation, the promise will be rejected even if there is no HTTP error.
 
 ## For TypeScript users
 Due to complex overloads, TypeScript may mark some errors at a different location than the actual incorrect location. In this situation, ensure that your parameters are passed correctly, for example, by avoiding duplicated request bodies or by correctly ordering the parameters. However, if you believe that it could be a bug, feel free to create a new issue.
