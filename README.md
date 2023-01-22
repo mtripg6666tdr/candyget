@@ -158,7 +158,7 @@ console.log(result.body);
 ```
 
 It is beneficial to write your custom validation function, with or without using a schema validator such as ajv or zod, in the validator option. 
-Note that if you specify `validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
+Note that if you specify a validator and the response body fails validation, the promise will be rejected even if there is no HTTP error.
 
 ## For TypeScript users
 Due to complex overloads, TypeScript may mark some errors at a different location than the actual incorrect location. In this situation, ensure that your arguments are passed correctly, for example, by avoiding duplicated request bodies or by correctly ordering the parameters. However, if you believe that it could be a bug, feel free to create a new issue.
