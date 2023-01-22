@@ -97,12 +97,12 @@ When no-http errors, such as network errors occur, the promise will be rejected.
 > If you specify `options.validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
 
 Otherwise the promise will be resolved as an object, which has the following properties:
-* `statusCode` - HTTP status code
-* `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
-* `body` - response body, type of which is what you specified.
-* `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
-* `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
-* `url` - [`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url.
+  * `statusCode` - HTTP status code
+  * `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
+  * `body` - the response body, type of which is what you specified
+  * `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
+  * `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
+  * `url` - [`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url
 
 ### candyget.defaultOptions
 
