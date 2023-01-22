@@ -110,7 +110,7 @@ It is possible to change candyget's default options globally by overriding it.
 
 #### By return types
 
-You can use shorthand functions instead of passing the return type as a parameter.
+Instead of passing the return type as a parameter, you can use shorthand functions.
 ```js
 candyget(URL, "string");
 // equals
@@ -124,8 +124,7 @@ Please note that you cannot specify a HTTP method when using these shorthand fun
 
 #### By HTTP methods
 
-Instead of passing the return type as a parameter, you can use shorthand functions.
-
+You can use shorthand functions instead of passing the HTTP method as a parameter.
 ```js
 candyget("GET", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
