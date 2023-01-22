@@ -392,6 +392,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           url: requestUrl,
         };
         if(returnType == "empty"){
+          destroy(req, res);
           resolve({
             body: null as unknown as BodyTypes[T],
             ...partialResult,
