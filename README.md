@@ -122,7 +122,7 @@ candyget(URL, "json", OPTIONS, BODY);
 // equals
 candyget.json(URL, OPTIONS, BODY);
 ```
-Note that you cannot specify a HTTP method if you use these shorthand functions. They always infer the HTTP method.
+Note that you cannot specify a HTTP method if you use these shorthand functions. They automatically infer the correct HTTP method.
 
 #### By HTTP methods
 
