@@ -4,9 +4,18 @@ import fs from "fs";
 import zlib from "zlib";
 import path from "path";
 import nock from "nock";
-import candyget from "..";
+import candygetTS from "../src";
 import crypto from "crypto";
 import { Readable } from "stream";
+
+const candyget = (() => {
+  try{
+    return require("..");
+  }
+  catch{
+    return candygetTS;
+  }
+})() as typeof candygetTS;
 
 nock.disableNetConnect();
 
