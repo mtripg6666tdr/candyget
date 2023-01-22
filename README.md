@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/candyget_logo.svg" alt="CandyGet">
   <br>
-  <p>A small sized HTTP(S) client for Node.js</p>
+  <p>A super small HTTP(S) client for Node.js</p>
   <a href="https://www.npmjs.com/package/candyget"><img src="https://img.shields.io/npm/v/candyget" alt="npm"></a>
   <a href="https://packagephobia.com/result?p=candyget"><img src="https://badgen.net/packagephobia/install/candyget"></a>
   <a href="https://github.com/mtripg6666tdr/candyget/actions/workflows/ci.yml"><img src="https://github.com/mtripg6666tdr/candyget/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
