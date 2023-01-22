@@ -91,7 +91,7 @@ When no method provided, candyget will automatically infer the method type; if b
 If a non-HTTP error (e.g., a network error) occurs, the promise will be rejected.
 
 > **Warning**
-> If you specify `options.validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
+> If you specify `options.validator` and `candyget` fails to validate the response body, the promise will be rejected, even if there is no non-HTTP error.
 
 Otherwise the promise will be resolved as an object, which has the following properties:
   * `statusCode` - HTTP status code
