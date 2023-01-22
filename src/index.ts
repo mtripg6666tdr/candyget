@@ -297,17 +297,17 @@ type CGExport = typeof candyget & {
 
 // define possible overloads
 
-function candyget<U>(url:Url, returnType:"json", options?:TypedOpts<U>):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<"json", U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<U>(url:Url, returnType:"json", options?:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>;
 
 function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null):Promise<CGResult<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>;
 
-function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options?:TypedOpts<U>):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<"json", U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options?:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>;
 
 function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:Opts):Promise<CGResult<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
