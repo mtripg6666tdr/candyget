@@ -67,8 +67,6 @@ candyget.defaultOptions.headers["Custom-Header"] = "foo";
 Make HTTP(S) request to the specified URL and return the result.
 
 When no method provided, candyget will automatically infer the method type; if body is present, it will infer as `POST`, otherwise it will infer as `GET`.
-
-Make http(s) request to the given url and return its result.  
 * `url` can be a `string` or a `URL` object.
 * `returnType` can be either of the followings:
   * `"string"` - `body` in the returned object will be a `string`.
