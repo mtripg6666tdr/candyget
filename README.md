@@ -161,7 +161,7 @@ It's good you write your custom validation function with or without your favorit
 Note that if you specify `validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
 
 ## For TypeScript users
-Due to complex overloads, sometimes TypeScript marks as an error the different location, not the actual wrong location. In this situation, make sure that your arguments are passed correctly (e.g. the duplicated request body or arguments order). Even so if you think it's a bug, feel free to create new issue.
+Due to complex overloads, TypeScript may mark some errors at a different location than the actual incorrect location. In this situation, ensure that your arguments are passed correctly, such as avoiding duplicated request bodies or correct argument order. However, if you believe that it could be a bug, feel free to create a new issue.
 
 ## License
 [MIT](LICENSE)
