@@ -77,7 +77,7 @@ Make http(s) request to the given url and return its result.
   * `"stream"` - `body` will be a `Readable`.
   * `"json"` - `body` will be a parsed object. If failed to parse, `body` will be a `string`.
   * `"empty"` - Only do a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
-* `options` can be an object that can have the following properties:
+* `options` is an object that can have the following properties:
   * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
   * `headers` - Object that presents HTTP headers. By default, `candyget` will pass `Accept`, `Accept-Encoding` and `User-Agent` (If you want to change, refer to the `defaultOptions` below).
   * `agent` - `http.Agent` to pass `http.request`.
