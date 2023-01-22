@@ -20,17 +20,25 @@
      borderopacity="1.0"
      inkscape:pageshadow="2"
      inkscape:pageopacity="1"
-     inkscape:pagecheckerboard="0"
+     inkscape:pagecheckerboard="true"
      showgrid="false"
      inkscape:zoom="0.60947527"
      inkscape:cx="564.41995"
-     inkscape:cy="132.08083"
+     inkscape:cy="130.44008"
      inkscape:window-width="1920"
      inkscape:window-height="991"
      inkscape:window-x="-9"
      inkscape:window-y="-9"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer3" />
+     inkscape:current-layer="svg21" />
+  <rect
+     style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:0.895529;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1"
+     id="rect951"
+     width="1280"
+     height="360"
+     x="-1280"
+     y="0"
+     transform="scale(-1,1)" />
   <g
      inkscape:groupmode="layer"
      id="layer3"
