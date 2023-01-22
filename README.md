@@ -91,7 +91,7 @@ Make http(s) request to the given url and return its result.
 * `body` can be a `string`, `Buffer`, `Stream` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
 
 `candyget` returns a promise.
-When no-http errors, such as network errors occur, the promise will be rejected.
+If a non-HTTP error (e.g., a network error) occurs, the promise will be rejected.
 
 > **Warning**
 > If you specify `options.validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
