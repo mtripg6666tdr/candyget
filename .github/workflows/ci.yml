@@ -115,11 +115,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download built files
-        uses: actions/download-artifact@v3
-        with:
-          name: build-out-files
-
       - name: Run test
         run: npm run coverage
 
