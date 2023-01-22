@@ -42,14 +42,14 @@ type Opts = {
 /**
  * Options with the validator property
  */
-type TypedOpts<T> = Opts & {
+type TypedOpts<U> = Opts & {
   /**
    * Specifies validator
    * @param responseBody the response body 
    * @returns represents if the response body is correct
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  validator:(responseBody:any) => responseBody is T,
+  validator:(responseBody:any) => responseBody is U,
 };
 
 /**
@@ -85,7 +85,7 @@ type BodyTypes = {
    * Requested resource will be return as parsed JSON. if failed to parse, return as string;
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  json: string|any,
+  json: any,
   /**
    * Only do a request. Response will not be parsed. You can handle the response if necessary
    */
