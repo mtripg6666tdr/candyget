@@ -14,19 +14,18 @@
 > **Warning**
 > This project is still in a development phase.
 
-- [candyget](#candyget)
-  - [Features](#features)
-  - [Usage](#usage)
-  - [API](#api)
-    - [candyget(url, returnType, options?, body?)](#candygeturl-returntype-options-body)
-    - [candyget(method, url, returnType, options?, body?)](#candygetmethod-url-returntype-options-body)
-    - [candyget.defaultOptions](#candygetdefaultoptions)
-    - [Shorthand functions](#shorthand-functions)
-      - [By return types](#by-return-types)
-      - [By HTTP methods](#by-http-methods)
-  - [Response body validation (for TypeScript users)](#response-body-validation-for-typescript-users)
-  - [For TypeScript users](#for-typescript-users)
-  - [License](#license)
+- [Features](#features)
+- [Usage](#usage)
+- [API](#api)
+  - [candyget(url, returnType, options?, body?)](#candygeturl-returntype-options-body)
+  - [candyget(method, url, returnType, options?, body?)](#candygetmethod-url-returntype-options-body)
+  - [candyget.defaultOptions](#candygetdefaultoptions)
+  - [Shorthand functions](#shorthand-functions)
+    - [By return types](#by-return-types)
+    - [By HTTP methods](#by-http-methods)
+- [Response body validation (for TypeScript users)](#response-body-validation-for-typescript-users)
+- [For TypeScript users](#for-typescript-users)
+- [License](#license)
 
 ## Features
 
