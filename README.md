@@ -129,13 +129,13 @@ Note that you cannot specify a HTTP method if you use these shorthand functions.
 You can use shorthand functions instead of passing the http method as a parameter.
 
 ```js
-candyget("GET", URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget("GET", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
-candyget.get(URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget.get(URL, RETURN_TYPE, OPTIONS, BODY);
 
-candyget("HEAD", URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget("HEAD", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
-candyget.head(URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget.head(URL, RETURN_TYPE, OPTIONS, BODY);
 ```
 Note that by using these shorthand functions TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
 
