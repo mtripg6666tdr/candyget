@@ -92,13 +92,6 @@ type BodyTypes = {
   empty: null,
 };
 
-/**
- * Represents candyget's return types, with typed body
- */
-type TypedBodyTypes<U> = Omit<BodyTypes, "json"> & {
-  json: U,
-};
-
 const BodyTypesSet = ["string", "buffer", "stream", "json", "empty"] as const;
 type HttpMethods = "GET"|"HEAD"|"POST"|"PUT"|"DELETE"|"OPTIONS"|"TRACE"|"PATCH";
 const HttpMethodsSet = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "TRACE", "PATCH"] as const;
@@ -152,8 +145,8 @@ type CGResult<T extends keyof BodyTypes> = {
 /**
  * Represents candyget's result type, with typed body.
  */
-type CGTypedResult<T extends keyof TypedBodyTypes<U>, U> = Omit<CGResult<T>, "body"> & {
-  body: TypedBodyTypes<U>[T];
+type CGTypedResult<U> = Omit<CGResult<"json">, "body"> & {
+  body: U;
 };
 
 type CGExport = typeof candyget & {
@@ -194,9 +187,9 @@ type CGExport = typeof candyget & {
    * @param options the request options
    * @param body the response body
    */
-  json<U>(url:Url, options:TypedOpts<U>):Promise<CGTypedResult<"json", U>>,
+  json<U>(url:Url, options:TypedOpts<U>):Promise<CGTypedResult<U>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  json<U>(url:Url, options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>,
+  json<U>(url:Url, options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>,
   json(url:Url, options?:Opts|null):Promise<CGResult<"json">>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json(url:Url, options?:OmitBody<Opts>, body?:any):Promise<CGResult<"json">>,
@@ -216,7 +209,7 @@ type CGExport = typeof candyget & {
    * @param returnType the type of the response body that will be included in the result.
    * @param options the request options
    */
-  get<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>):Promise<CGTypedResult<"json", U>>,
+  get<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>):Promise<CGTypedResult<U>>,
   get<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null):Promise<CGResult<T>>,
   /**
    * Shorthand of candyget("HEAD", url, "empty", options)
@@ -233,9 +226,9 @@ type CGExport = typeof candyget & {
    * @param options the request options
    * @param body the request body
    */
-  post<U>(url:Url, returnType:"json", options:RequireBody<TypedOpts<U>>):Promise<CGTypedResult<"json", U>>,
+  post<U>(url:Url, returnType:"json", options:RequireBody<TypedOpts<U>>):Promise<CGTypedResult<U>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  post<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body:any):Promise<CGTypedResult<"json", U>>,
+  post<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body:any):Promise<CGTypedResult<U>>,
   post<T extends keyof BodyTypes>(url:Url, returnType:T, options:RequireBody<Opts>):Promise<CGResult<T>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   post<T extends keyof BodyTypes>(url:Url, returnType:T, options:OmitBody<Opts>|null, body:any):Promise<CGResult<T>>,
@@ -257,9 +250,9 @@ type CGExport = typeof candyget & {
    * @param options the request options
    * @param body the request body
    */
-  delete<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<"json", U>>,
+  delete<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>,
+  delete<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>,
   delete<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null):Promise<CGResult<T>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>,
@@ -270,7 +263,7 @@ type CGExport = typeof candyget & {
    * @param returnType the type of the response body that will be included in the result.
    * @param options the request options
    */
-  options<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>):Promise<CGTypedResult<"json", U>>,
+  options<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>):Promise<CGTypedResult<U>>,
   options<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null):Promise<CGResult<T>>,
   /**
    * Shorthand of candyget("TRACE", url, "empty", options)
@@ -287,9 +280,9 @@ type CGExport = typeof candyget & {
    * @param options the request options
    * @param body the request body
    */
-  patch<U>(url:Url, returnType:"json", options:RequireBody<TypedOpts<U>>):Promise<CGTypedResult<"json", U>>,
+  patch<U>(url:Url, returnType:"json", options:RequireBody<TypedOpts<U>>):Promise<CGTypedResult<U>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  patch<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body:any):Promise<CGTypedResult<"json", U>>,
+  patch<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body:any):Promise<CGTypedResult<U>>,
   patch<T extends keyof BodyTypes>(url:Url, returnType:T, options:RequireBody<Opts>):Promise<CGResult<T>>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   patch<T extends keyof BodyTypes>(url:Url, returnType:T, options:OmitBody<Opts>|null, body:any):Promise<CGResult<T>>,
@@ -297,17 +290,17 @@ type CGExport = typeof candyget & {
 
 // define possible overloads
 
-function candyget<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>;
 
 function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null):Promise<CGResult<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>;
 
-function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<"json", U>>;
+function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>;
 
 function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:Opts):Promise<CGResult<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
