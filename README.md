@@ -1,11 +1,17 @@
-# candyget
-[![npm](https://img.shields.io/npm/v/candyget)](https://www.npmjs.com/package/candyget)
-![npm bundle size](https://img.shields.io/bundlephobia/min/candyget)
+<div align="center">
+  <img src="assets/candyget_logo.svg" alt="CandyGet">
+  <br>
+  <p>A tiny, candy:candy: sized HTTP(S) client for Node.js</p>
+  <a href="https://www.npmjs.com/package/candyget"><img src="https://img.shields.io/npm/v/candyget" alt="npm"></a>
+  <a href="https://packagephobia.com/result?p=candyget"><img src="https://badgen.net/packagephobia/install/candyget"></a>
+  <a href="https://github.com/mtripg6666tdr/candyget/actions/workflows/ci.yml"><img src="https://github.com/mtripg6666tdr/candyget/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img alt="License" src="https://img.shields.io/npm/l/candyget">
+</div>
+
+---
 
 > **Warning**
 > This project is still in a development phase.
-
-candyget is a small sized HTTP(S) client for Node.js
 
 - [candyget](#candyget)
   - [Features](#features)
@@ -57,21 +63,18 @@ candyget.defaultOptions.headers["Custom-Header"] = "foo";
 
 ## API
 ### candyget(url, returnType, options?, body?)
-
-`candyget` will automatically infer the method type; if body is present, infer as `GET`, otherwise `POST`.  
-If you want to specify the other method you can use:
-
 ### candyget(method, url, returnType, options?, body?)
+Make HTTP(S) request to the specified URL and return the result.
 
-Make http(s) request to the given url and return its result.  
+When no method provided, candyget will automatically infer the method type; if body is present, it will infer as `POST`, otherwise it will infer as `GET`.
 * `url` can be a `string` or a `URL` object.
 * `returnType` can be either of the followings:
   * `"string"` - `body` in the returned object will be a `string`.
   * `"buffer"` - `body` will be a `Buffer`.
   * `"stream"` - `body` will be a `Readable`.
   * `"json"` - `body` will be a parsed object. If failed to parse, `body` will be a `string`.
-  * `"empty"` - Only do a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
-* `options` can be an object that can have the following properties:
+  * `"empty"` - Only make a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
+* `options` is an object that can have the following properties:
   * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
   * `headers` - Object that presents HTTP headers. By default, `candyget` will pass `Accept`, `Accept-Encoding` and `User-Agent` (If you want to change, refer to the `defaultOptions` below).
   * `agent` - `http.Agent` to pass `http.request`.
@@ -85,28 +88,29 @@ Make http(s) request to the given url and return its result.
 * `body` can be a `string`, `Buffer`, `Stream` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
 
 `candyget` returns a promise.
-When no-http errors such as network errors occur, the promise will be rejected.
+If a non-HTTP error (e.g., a network error) occurs, the promise will be rejected.
 
 > **Warning**
-> If you specify `options.validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
+> If you specify `options.validator` and `candyget` fails to validate the response body, the promise will be rejected, even if there is no non-HTTP error.
 
 Otherwise the promise will be resolved as an object, which has the following properties:
-* `statusCode` - HTTP status code
-* `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
-* `body` - response body, type of which is what you specified.
-* `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
-* `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
-* `url` - [`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url.
+  * `statusCode` - HTTP status code
+  * `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
+  * `body` - the response body, type of which is what you specified
+  * `request` - [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest)
+  * `response` - [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage)
+  * `url` - [`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url
 
 ### candyget.defaultOptions
 
-You can override this to change the default options (except a `body` property), which are used by candyget.
+The default options (excluding the `body` property), which are used by candyget.
+It is possible to change candyget's default options globally by overriding it.
 
 ### Shorthand functions
 
 #### By return types
 
-You can use shorthand functions instead of passing the return type as a parameter.
+Instead of passing the return type as a parameter, you can use shorthand functions.
 ```js
 candyget(URL, "string");
 // equals
@@ -116,31 +120,29 @@ candyget(URL, "json", OPTIONS, BODY);
 // equals
 candyget.json(URL, OPTIONS, BODY);
 ```
-Note that you cannot specify a HTTP method if you use these shorthand functions. They always infer the HTTP method.
+Please note that you cannot specify a HTTP method when using these shorthand functions. They automatically infer the correct HTTP method.
 
 #### By HTTP methods
 
-You can use shorthand functions instead of passing the http method as a parameter.
-
+You can use shorthand functions instead of passing the HTTP method as a parameter.
 ```js
-candyget("GET", URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget("GET", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
-candyget.get(URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget.get(URL, RETURN_TYPE, OPTIONS, BODY);
 
-candyget("HEAD", URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget("HEAD", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
-candyget.head(URL, RETURN_TYPE,  OPTIONS, BODY);
+candyget.head(URL, RETURN_TYPE, OPTIONS, BODY);
 ```
-Note that by using these shorthand functions TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post` TypeScript throws an error unless you specify the request body)
+By using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post`, TypeScript will throw an error unless you specify the request body)
 
 ## Response body validation (for TypeScript users)
 
-If you specify `json` as the return type, you will get the body property in your result typed `any`.
-Here if you specify `validator` property in the options, the response body will be typed correctly.
+When you specify `json` as the return type, the `body` property in the result will be typed as `any`. However, if you include a `validator` property in the options, the response body will be correctly typed.
 
 ```ts
 type resultType = {
-  data:string,
+  data: string,
 }
 
 const result = await candyget.get<resultType>("https://your.site/great/content", "json", {
@@ -151,11 +153,11 @@ const result = await candyget.get<resultType>("https://your.site/great/content",
 console.log(result.body);
 ```
 
-It's good you write your custom validation function with or without your favorite schema validator such as `ajv`, `zod` and so on in the `validator` option.  
-Note that if you specify `validator` and candyget fails the validation of the response body, the promise will be rejected even if there is no no-http error.
+It is beneficial to write your custom validation function, with or without using a schema validator such as ajv or zod, in the validator option. 
+Please note that if you specify a validator and the response body fails validation, the promise will be rejected even if there is no HTTP error.
 
 ## For TypeScript users
-Due to complex overloads, sometimes TypeScript marks as an error the different location, not the actual wrong location. In this situation, make sure that your arguments are passed correctly (e.g. the duplicated request body or arguments order). Even so if you think it's a bug, feel free to create new issue.
+Due to complex overloads, TypeScript may mark some errors at a different location than the actual incorrect location. In this situation, ensure that your parameters are passed correctly, for example, by avoiding duplicated request bodies or by correctly ordering the parameters. However, if you believe that it could be a bug, feel free to create a new issue.
 
 ## License
 [MIT](LICENSE)
