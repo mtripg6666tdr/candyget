@@ -396,6 +396,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             body: null as unknown as BodyTypes[T],
             ...partialResult,
           });
+          return;
         }
         const pipelineFragment:Readable[] = [res];
         const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
@@ -417,6 +418,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             body: stream as unknown as BodyTypes[T],
             ...partialResult,
           });
+          return;
         }else{
           let bufs:Buffer[]|null = [];
           (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
