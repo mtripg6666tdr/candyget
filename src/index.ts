@@ -122,7 +122,7 @@ const HttpLibs = {
   "https:": https,
 } as const;
 const redirectStatuses:Readonly<number[]> = [301, 302, 303, 307, 308];
-const CONTENT_TYPE = "content-type";
+const CONTENT_TYPE = "Content-Type";
 const TIMED_OUT = "timed out";
 const objectAlias = Object;
 const bufferAlias = Buffer;
@@ -147,6 +147,7 @@ type destroyable = {destroyed?:boolean, destroy:()=>void};
 const destroy = (...destroyable:destroyable[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
+const normalizeKey = (key:string) => key.split("-").map(e => [e[0].toUpperCase(), e.slice(1)].join("")).join("-");
 
 /**
  * Represents candyget's result type.
@@ -359,9 +360,9 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // once clear headers
   options.headers = createEmpty();
   // assign headers with keys in lower case
-  objectAlias.keys(headers).map(key => options.headers[key.toLowerCase()] = headers[key]);
+  objectAlias.keys(headers).map(key => options.headers[normalizeKey(key)] = headers[key]);
   // if json was passed and content-type is not set, set automatically
-  if(!isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
+  if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
   if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
