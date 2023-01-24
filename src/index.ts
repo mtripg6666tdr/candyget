@@ -356,11 +356,10 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers = objectAlias.assign(createEmpty(), defaultOptions.headers, (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
-  // once clear headers
-  options.headers = createEmpty();
+  const headers = createEmpty();
   // assign headers with keys in lower case
-  objectAlias.keys(headers).map(key => options.headers[normalizeKey(key)] = headers[key]);
+  objectAlias.keys(options.headers).map(key => headers[normalizeKey(key)] = options.headers[key]);
+  options.headers = headers;
   // if json was passed and content-type is not set, set automatically
   if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
