@@ -2,22 +2,21 @@ import type { IncomingHttpHeaders, Agent } from "http";
 import type { Readable as ReadableType, TransformOptions } from "stream";
 import type { ReadableStream } from "stream/web";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isObject = ((target:any) => typeof target == "object") as (target:any) => target is object;
+
 // Import these module by `require` instead of `import` in order to prevent from generating helper methods.
 const requireLocal = require;
-const tryRequire = (mod:string) => {
-  try{
-    return requireLocal(mod);
-  }
-  catch{
-    return null;
-  }
-};
 const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
 const { PassThrough, pipeline, Readable, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
-const globalFetch = (typeof fetch == "function" && fetch) || (tryRequire("node-fetch") as typeof import("node-fetch").default) || (tryRequire("undici") as typeof import("undici"))?.fetch;
-const globalAbortController = (typeof AbortController == "function" && AbortController) || (tryRequire("abort-controoler") as typeof import("abort-controller").default);
+const globalFetch = (typeof fetch == "function" && fetch) || undefined;
+const globalAbortController = (typeof AbortController == "function" && AbortController) || undefined;
 
 /**
  * Represents options of candyget
@@ -49,9 +48,14 @@ type Opts = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?:any,
   /**
-   * Prevent from using fetch API
+   * Prevent from using fetch API or passing custom fetch implementation
    */
-  optoutFetch?:boolean,
+  fetch?:boolean|{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fetch:(url:string, init:any)=>any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    AbortController:new () => any,
+  },
 };
 
 /**
@@ -135,10 +139,6 @@ class CandyGetError extends Error {
 const genInvalidParamMessage = (name:string) => `Invalid Param:${name}`;
 const genError = (message:string) => new CandyGetError(message);
 const genRejectedPromise = (message:string) => Promise.reject(genError(message));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
 const noop = () => {/* empty */};
 const createEmpty = () => objectAlias.create(null) as EmptyObject;
 type destroyable = {destroyed?:boolean, destroy:()=>void};
@@ -349,7 +349,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // validate params (not strictly)
   if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
   if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
-  if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
+  if(!isObject(overrideOptions)) return genRejectedPromise(genInvalidParamMessage("options"));
   if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
@@ -399,7 +399,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
           let body = rawBody;
           if(returnType == "json"){
-            if("validator" in options && typeof options.validator === "function"){
+            if("validator" in options && typeof options.validator == "function"){
               body = jsonAlias.parse(body);
               if(!options.validator(body)) reject(genError("invalid response body"));
             }else{
@@ -426,8 +426,28 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       : jsonAlias.stringify(body);
     };
     return new Promise<CGResult<T>>((resolve, reject) => {
-      if(!options.optoutFetch && globalFetch && globalAbortController){
-        const abortController = new globalAbortController();
+      const { fetch, AbortController } = (() => {
+        if(options.fetch){
+          if(isObject(options.fetch)){
+            return options.fetch;
+          }else{
+            return {
+              fetch: globalFetch,
+              AbortController: globalAbortController,
+            };
+          }
+        }else{
+          return {
+            fetch: null,
+            AbortController: null,
+          };
+        }
+      })() as {
+        fetch: (typeof globalFetch)|null,
+        AbortController: (typeof globalAbortController)|null,
+      };
+      if(fetch && AbortController){
+        const abortController = new AbortController();
         const timeout = setTimeout(() => {
           abortController.abort();
         }, options.timeout);
@@ -443,17 +463,14 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             _resolve(resolveBody());
           }
         }).then(fineBody => {
-          // use options.f for custom fetch implementation
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (((options as any).f || globalFetch) as typeof globalFetch)(requestUrl.href, {
+          fetch(requestUrl.href, {
             method: method,
             headers: options.headers,
             agent: options.agent,
             redirect: "manual",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            signal: abortController.signal as any,
+            signal: abortController.signal,
             body: fineBody,
-          }).then(async res => {
+          } as RequestInit).then(async res => {
             clearTimeout(timeout);
             if(redirect(res.status, res.headers.get("location"), resolve, reject)){
               if(res.body){
@@ -481,7 +498,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             const stream = new PassThrough(options.transformerOptions);
             if("pipe" in res.body){
               // handle node-fetch's fetch
-              pipeline(res.body, stream, noop);
+              pipeline(res.body as unknown as ReadableStream, stream, noop);
             }else if("fromWeb" in Readable){
               pipeline(Readable.fromWeb(res.body as unknown as ReadableStream), stream, noop);
             }else{
@@ -571,8 +588,8 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           return;
         }
       })
-        ?.on("error", reject)
-        ?.on("timeout", () => reject(genError("timed out")))
+        .on("error", reject)
+        .on("timeout", () => reject(genError("timed out")))
       ;
       if(body && isObjectType(body, Stream)){
         body
@@ -621,7 +638,7 @@ const defaultOptions = {
   transformerOptions: {
     autoDestroy: true,
   },
-  optoutFetch: false,
+  fetch: false,
 };
 
 candygetType.defaultOptions = objectAlias.assign({}, defaultOptions);

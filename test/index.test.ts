@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { Readable } from "stream";
 import nodeFetch from "node-fetch";
 import undici from "undici";
+import AbortController from "abort-controller";
 
 console.log("Test running on", process.versions.node);
 
@@ -22,7 +23,7 @@ const candyget = (() => {
 })() as typeof candygetTS;
 
 nock.disableNetConnect();
-candyget.defaultOptions.optoutFetch = true;
+candyget.defaultOptions.fetch = false;
 
 function nockUrl(path:string = "", http:boolean = false){
   return `http${http ? "" : "s"}://nocking-host.candyget${path}`;
@@ -996,21 +997,36 @@ describe("CandyGet Tests", function(){
   });
 
   describe("#Fetch API", function(){
+    // @ts-expect-error 2322
+    let fromWeb:typeof Readable.fromWeb = null;
     this.beforeAll(() => {
       nock.enableNetConnect();
+      fromWeb = Readable.fromWeb;
     });
     this.afterAll(() => {
-      delete (candyget.defaultOptions as any)["f"];
+      delete candyget.defaultOptions.fetch;
       nock.disableNetConnect();
+      Readable.fromWeb = fromWeb;
     });
 
-    function testFetch(tag:string, f?:any){
+    function testFetch(tag:string, fetchImplement?:any, disableFromWeb:boolean = false){
       describe(tag, function(){
-        (candyget.defaultOptions as any)["f"] = f;
+        this.timeout(10 * 1000);
+        this.beforeAll(() => {
+          candyget.defaultOptions.fetch = fetchImplement ? {
+            fetch: fetchImplement,
+            AbortController: AbortController
+          } : true;
+          if(disableFromWeb){
+            // @ts-expect-error 2322
+            Readable.fromWeb = undefined;
+          }
+        });
+        
         describe("#Get", function(){
           it("request is fine", async function(){
             const result = await candyget("https://httpbin.org/get", "json", {
-              optoutFetch: false,
+              fetch: false,
               headers: {
                 "X-Custom-Header": "1"
               }
@@ -1023,7 +1039,7 @@ describe("CandyGet Tests", function(){
         describe("#Post", function(){
           it("request is fine", async function(){
             const result = await candyget.post("https://httpbin.org/post", "json", {
-              optoutFetch: false,
+              fetch: false,
             }, "foo bar request here");
             assert.equal(result.statusCode, 200);
             assert.equal(result.body.data, "foo bar request here");
@@ -1033,7 +1049,7 @@ describe("CandyGet Tests", function(){
         describe("#Head", function(){
           it("request is fine", async function(){
             const result = await candyget.head("https://httpbin.org/get", {
-              optoutFetch: false,
+              fetch: false,
             });
             assert.equal(result.statusCode, 200);
           });
@@ -1042,7 +1058,7 @@ describe("CandyGet Tests", function(){
         describe("#Redirect", function(){
           it("response is 302", async function(){
             const result = await candyget.empty("https://httpbin.org/absolute-redirect/10", {
-              optoutFetch: false,
+              fetch: false,
               maxRedirects: 3
             });
             assert.equal(result.statusCode, 302);
@@ -1050,7 +1066,7 @@ describe("CandyGet Tests", function(){
 
           it("response is 200", async function(){
             const result = await candyget.json("https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fget&status_code=302", {
-              optoutFetch: false,
+              fetch: false,
             });
             assert.equal(result.statusCode, 200);
           });
@@ -1061,5 +1077,6 @@ describe("CandyGet Tests", function(){
     testFetch("Default");
     testFetch("node-fetch", nodeFetch); 
     testFetch("undici", undici.fetch);
+    testFetch("Default without fromWeb", undefined, true);
   });
 });
