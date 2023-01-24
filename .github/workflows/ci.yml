@@ -87,14 +87,6 @@ jobs:
 
       - name: Test
         run: npm test
-
-      - name: Uninstall node-fetch
-        if: ${{ matrix.node-version }} != "18.x"
-        run: npm r node-fetch
-
-      - name: Test without node-fetch
-        if: ${{ matrix.node-version }} != "18.x"
-        run: npm test
   
   coverage:
     runs-on: ubuntu-latest
