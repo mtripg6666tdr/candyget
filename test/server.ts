@@ -32,12 +32,22 @@ const server = http.createServer((req, res) => {
       "Location": "/get"
     });
     res.end();
+    return;
   }else if(req.url!.startsWith("/absolute-redirect/")){
     const last = Number(req.url!.split("/absolute-redirect/")[1]) - 1;
     res.writeHead(302, {
       "Location": "/absolute-redirect/" + last.toString(),
     });
     res.end();
+    return;
+  }else if(req.url === "/delay" && req.method === "GET"){
+    setTimeout(() => {
+      if(!res.destroyed){
+        res.writeHead(200);
+        res.end("OK!");
+      }
+    }, 10 * 1000);
+    return;
   }
   res.writeHead(400);
   res.end();

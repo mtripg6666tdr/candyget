@@ -1,7 +1,6 @@
 import assert from "assert";
 import { expect } from "chai";
 import fs from "fs";
-import http from "http";
 import zlib from "zlib";
 import path from "path";
 import nock from "nock";
@@ -62,7 +61,7 @@ describe("CandyGet Tests", function(){
   });
   this.afterAll(() => new Promise(resolve => {
     nock.enableNetConnect();
-    nodeFetch("http://localhost:8891/shutdown").then(res => res.text()).then(console.log).then(resolve);
+    nodeFetch("http://localhost:8891/shutdown").then(res => res.text()).then(resolve);
   }));
 
   describe("#Http", function(){
@@ -1011,8 +1010,23 @@ describe("CandyGet Tests", function(){
             maxRedirects: NaN,
           }), genErrorObject("Invalid Param:maxRedirects"));
         });
-      })
-    })
+      });
+    });
+
+    describe("#Body that occurs an error", async function(){
+      it("Error", async function(){
+        nock(nockUrl())
+          .post("/validate")
+          .reply(200);
+        const file = new Readable({
+          read(){
+            this.destroy(new Error("some error!"));
+          }
+        });
+        await assert.rejects(candyget(nockUrl("/validate"), "string", {}, file));
+        file.destroy();
+      });
+    });
   });
 
   describe("#Fetch API", function(){
@@ -1094,6 +1108,20 @@ describe("CandyGet Tests", function(){
               const resp = JSON.parse(Buffer.concat(bufs).toString());
               assert.ok(resp.args);
             })
+          });
+        });
+
+        describe("#Invalid URL", function(){
+          it("Error", async function(){
+            await assert.rejects(candyget("http://thisisnotexistshost.foobar/", "json"));
+          });
+        });
+
+        describe("#Time out", function(){
+          it("request is fine", async function(){
+            await assert.rejects(candyget("http://localhost:8891/delay", "string", {
+              timeout: 500
+            }), genErrorObject("timed out"));
           });
         });
       });

@@ -513,6 +513,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
               resolveStream([], partialResult, stream, resolve, reject);
             }
           }).catch(er => {
+            // TODO: implement better way to judge the aborted error or not
             if(er.message?.includes("abort")){
               reject(genError("timed out"));
             }else{
