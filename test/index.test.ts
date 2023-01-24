@@ -1064,7 +1064,7 @@ describe("CandyGet Tests", function(){
               }
             });
             assert.equal(result.statusCode, 200);
-            assert.equal(result.body.headers["X-Custom-Header"], 1);
+            assert.equal(result.body.headers["x-custom-header"], 1);
           });
         });
 
