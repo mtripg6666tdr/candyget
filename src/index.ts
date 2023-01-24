@@ -447,7 +447,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             const buf:Buffer[] = [];
             body
               .on("data", chunk => buf.push(chunk))
-              .on("end", () => _resolve(bufferAlias.concat(buf)))
+              .on("end", () => _resolve(buf.every(e => isString(e)) ? buf.join("") : bufferAlias.concat(buf)))
               .on("error", _reject)
             ;
           }else{
@@ -464,9 +464,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           } as RequestInit).then(async res => {
             clearTimeout(timeout);
             if(redirect(res.status, res.headers.get("location"), resolve, reject)){
-              if(res.body){
-                res.arrayBuffer();
-              }
+              res.arrayBuffer?.().catch(noop);
               return;
             }
             const headers:{[key:string]:string} = createEmpty();

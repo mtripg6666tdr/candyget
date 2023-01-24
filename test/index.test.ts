@@ -1,6 +1,7 @@
 import assert from "assert";
 import { expect } from "chai";
 import fs from "fs";
+import http from "http";
 import zlib from "zlib";
 import path from "path";
 import nock from "nock";
@@ -22,9 +23,6 @@ const candyget = (() => {
   }
 })() as typeof candygetTS;
 
-nock.disableNetConnect();
-candyget.defaultOptions.fetch = false;
-
 function nockUrl(path:string = "", http:boolean = false){
   return `http${http ? "" : "s"}://nocking-host.candyget${path}`;
 }
@@ -44,7 +42,28 @@ const JQUERY_HASH = "A6F3F0FAEA4B3D48E03176341BEF0ED3151FFBF226D4C6635F1C6039C05
 const VSCODE_PNG_HASH = "E7A0F94AF1BFF6E01E6A4C0C6297F2B2D3E1F7BAEDE6C98143E33728DBDA5ED0";
 
 describe("CandyGet Tests", function(){
-  this.afterEach(() => nock.cleanAll())
+  this.beforeAll(async function(){
+    this.timeout(50 * 500);
+    let success = false;
+    console.log("Waiting for Mock server...");
+    for(let i = 1; i < 10; i++){
+      console.log(".");
+      await new Promise(resolve => setTimeout(resolve, 500 * i));
+      success = await nodeFetch("http://localhost:8891/hello").then(res => res.ok);
+    }
+    if(!success) throw new Error("Mock server has not been ready in time");
+    console.log("Mock server ready");
+
+    candyget.defaultOptions.fetch = false;
+    nock.disableNetConnect();
+  });
+  this.afterEach(function(){
+    nock.cleanAll()
+  });
+  this.afterAll(() => new Promise(resolve => {
+    nock.enableNetConnect();
+    nodeFetch("http://localhost:8891/shutdown").then(res => res.text()).then(console.log).then(resolve);
+  }));
 
   describe("#Http", function(){
     describe("#Get", function(){
@@ -1025,19 +1044,27 @@ describe("CandyGet Tests", function(){
         
         describe("#Get", function(){
           it("request is fine", async function(){
-            const result = await candyget("https://httpbin.org/get", "json", {
+            const result = await candyget("http://localhost:8891/get", "json", {
               headers: {
                 "X-Custom-Header": "1"
               }
             });
             assert.equal(result.statusCode, 200);
-            assert.equal(result.body.headers["X-Custom-Header"], 1);
+            assert.equal(result.body.headers["x-custom-header"], 1);
           });
         });
 
         describe("#Post", function(){
           it("request is fine", async function(){
-            const result = await candyget.post("https://httpbin.org/post", "json", {}, "foo bar request here");
+            const result = await candyget.post("http://localhost:8891/post", "json", {}, Readable.from(Buffer.from("foo bar request here")));
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.data, "foo bar request here");
+          });
+        });
+
+        describe("#Post (Object mode stream)", function(){
+          it("request is fine", async function(){
+            const result = await candyget.post("http://localhost:8891/post", "json", {}, Readable.from(Buffer.from("foo bar request here")));
             assert.equal(result.statusCode, 200);
             assert.equal(result.body.data, "foo bar request here");
           });
@@ -1045,22 +1072,28 @@ describe("CandyGet Tests", function(){
 
         describe("#Head", function(){
           it("request is fine", async function(){
-            const result = await candyget.head("https://httpbin.org/get");
+            const result = await candyget.head("http://localhost:8891/get");
             assert.equal(result.statusCode, 200);
           });
         });
 
         describe("#Redirect", function(){
           it("response is 302", async function(){
-            const result = await candyget.empty("https://httpbin.org/absolute-redirect/10", {
-              maxRedirects: 3
+            const result = await candyget.empty("http://localhost:8891/absolute-redirect/10", {
+              maxRedirects: 2
             });
             assert.equal(result.statusCode, 302);
           });
 
           it("response is 200", async function(){
-            const result = await candyget.json("https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fget&status_code=302");
+            const result = await candyget.stream("http://localhost:8891/absolute-redirect/0");
             assert.equal(result.statusCode, 200);
+            const bufs:Buffer[] = [];
+            result.body.on("data", chunk => bufs.push(chunk));
+            result.body.on("end", () => {
+              const resp = JSON.parse(Buffer.concat(bufs).toString());
+              assert.ok(resp.args);
+            })
           });
         });
       });
