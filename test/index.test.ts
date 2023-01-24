@@ -1134,13 +1134,15 @@ describe("CandyGet Tests", function(){
 
     describe("#Invalid fetch impelementation", function(){
       it("request is fine", async function(){
-        const result = await candyget("http://localhost:8891/get", "json", {
+        await assert.rejects(candyget("http://localhost:8891/get", "json", {
           fetch: {
-            fetch(url, init){
-              return Promise.reject("This method is not implemented");
+            fetch(){
+              return Promise.reject(new Error("This method is not implemented"));
             },
             AbortController,
           }
+        }), {
+          message: "This method is not implemented"
         });
       });
     });

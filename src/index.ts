@@ -123,8 +123,10 @@ const HttpLibs = {
 } as const;
 const redirectStatuses:Readonly<number[]> = [301, 302, 303, 307, 308];
 const CONTENT_TYPE = "content-type";
+const TIMED_OUT = "timed out";
 const objectAlias = Object;
 const bufferAlias = Buffer;
+const promiseAlias = Promise;
 const jsonAlias = JSON;
 
 /**
@@ -138,7 +140,7 @@ class CandyGetError extends Error {
 }
 const genInvalidParamMessage = (name:string) => `Invalid Param:${name}`;
 const genError = (message:string) => new CandyGetError(message);
-const genRejectedPromise = (message:string) => Promise.reject(genError(message));
+const genRejectedPromise = (message:string) => promiseAlias.reject(genError(message));
 const noop = () => {/* empty */};
 const createEmpty = () => objectAlias.create(null) as EmptyObject;
 type destroyable = {destroyed?:boolean, destroy:()=>void};
@@ -425,7 +427,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       ? body
       : jsonAlias.stringify(body);
     };
-    return new Promise<CGResult<T>>((resolve, reject) => {
+    return new promiseAlias<CGResult<T>>((resolve, reject) => {
       const [ fetch, AbortController ] = (() => {
         if(options.fetch){
           if(isObject(options.fetch)){
@@ -442,7 +444,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         const timeout = setTimeout(() => {
           abortController.abort();
         }, options.timeout);
-        new Promise<string|Buffer|undefined>((_resolve, _reject) => {
+        new promiseAlias<string|Buffer|undefined>((_resolve, _reject) => {
           if(body instanceof Stream){
             const buf:Buffer[] = [];
             body
@@ -515,7 +517,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           }).catch(er => {
             // TODO: implement better way to judge the aborted error or not
             if(er.message?.includes("abort")){
-              reject(genError("timed out"));
+              reject(genError(TIMED_OUT));
             }else{
               reject(er);
             }
@@ -579,7 +581,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         }
       })
         .on("error", reject)
-        .on("timeout", () => reject(genError("timed out")))
+        .on("timeout", () => reject(genError(TIMED_OUT)))
       ;
       if(body && isObjectType(body, Stream)){
         body
