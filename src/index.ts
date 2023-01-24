@@ -15,8 +15,8 @@ const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
 const { PassThrough, pipeline, Readable, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
-const globalFetch = (typeof fetch == "function" && fetch) || undefined;
-const globalAbortController = (typeof AbortController == "function" && AbortController) || undefined;
+const globalFetch = (typeof fetch == "function" && fetch);
+const globalAbortController = (typeof AbortController == "function" && AbortController);
 
 /**
  * Represents options of candyget
@@ -426,26 +426,17 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       : jsonAlias.stringify(body);
     };
     return new Promise<CGResult<T>>((resolve, reject) => {
-      const { fetch, AbortController } = (() => {
+      const [ fetch, AbortController ] = (() => {
         if(options.fetch){
           if(isObject(options.fetch)){
-            return options.fetch;
+            return [options.fetch.fetch, options.fetch.AbortController];
           }else{
-            return {
-              fetch: globalFetch,
-              AbortController: globalAbortController,
-            };
+            return [globalFetch, globalAbortController];
           }
         }else{
-          return {
-            fetch: null,
-            AbortController: null,
-          };
+          return [];
         }
-      })() as {
-        fetch: (typeof globalFetch)|null,
-        AbortController: (typeof globalAbortController)|null,
-      };
+      })() as [(typeof globalFetch)|null, (typeof globalAbortController)|null];
       if(fetch && AbortController){
         const abortController = new AbortController();
         const timeout = setTimeout(() => {

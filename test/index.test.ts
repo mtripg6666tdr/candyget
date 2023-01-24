@@ -1026,7 +1026,6 @@ describe("CandyGet Tests", function(){
         describe("#Get", function(){
           it("request is fine", async function(){
             const result = await candyget("https://httpbin.org/get", "json", {
-              fetch: false,
               headers: {
                 "X-Custom-Header": "1"
               }
@@ -1038,9 +1037,7 @@ describe("CandyGet Tests", function(){
 
         describe("#Post", function(){
           it("request is fine", async function(){
-            const result = await candyget.post("https://httpbin.org/post", "json", {
-              fetch: false,
-            }, "foo bar request here");
+            const result = await candyget.post("https://httpbin.org/post", "json", {}, "foo bar request here");
             assert.equal(result.statusCode, 200);
             assert.equal(result.body.data, "foo bar request here");
           });
@@ -1048,9 +1045,7 @@ describe("CandyGet Tests", function(){
 
         describe("#Head", function(){
           it("request is fine", async function(){
-            const result = await candyget.head("https://httpbin.org/get", {
-              fetch: false,
-            });
+            const result = await candyget.head("https://httpbin.org/get");
             assert.equal(result.statusCode, 200);
           });
         });
@@ -1058,16 +1053,13 @@ describe("CandyGet Tests", function(){
         describe("#Redirect", function(){
           it("response is 302", async function(){
             const result = await candyget.empty("https://httpbin.org/absolute-redirect/10", {
-              fetch: false,
               maxRedirects: 3
             });
             assert.equal(result.statusCode, 302);
           });
 
           it("response is 200", async function(){
-            const result = await candyget.json("https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fget&status_code=302", {
-              fetch: false,
-            });
+            const result = await candyget.json("https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fget&status_code=302");
             assert.equal(result.statusCode, 200);
           });
         });
