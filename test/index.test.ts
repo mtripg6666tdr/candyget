@@ -1078,7 +1078,7 @@ describe("CandyGet Tests", function(){
 
         describe("#Post (Object mode stream)", function(){
           it("request is fine", async function(){
-            const result = await candyget.post("http://localhost:8891/post", "json", {}, Readable.from(Buffer.from("foo bar request here")));
+            const result = await candyget.post("http://localhost:8891/post", "json", {}, Readable.from("foo bar request here"));
             assert.equal(result.statusCode, 200);
             assert.equal(result.body.data, "foo bar request here");
           });
@@ -1131,5 +1131,18 @@ describe("CandyGet Tests", function(){
     testFetch("node-fetch", nodeFetch); 
     testFetch("undici", undici.fetch);
     testFetch("Default without fromWeb", undefined, true);
+
+    describe("#Invalid fetch impelementation", function(){
+      it("request is fine", async function(){
+        const result = await candyget("http://localhost:8891/get", "json", {
+          fetch: {
+            fetch(url, init){
+              return Promise.reject("This method is not implemented");
+            },
+            AbortController,
+          }
+        });
+      });
+    });
   });
 });
