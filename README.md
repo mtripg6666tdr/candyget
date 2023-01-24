@@ -82,6 +82,19 @@ When no method provided, candyget will automatically infer the method type; if b
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
   * `body` - a `string`, `Buffer`, `Stream` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.
   * `validator` - a `function` to validate if the response body has the expected type. See [below](#response-body-validation-for-typescript-users) for more info.
+  * `fetch` - Boolean or Fetch implementation, used by candyget. If it is set to `true` and in Node.js (v16.15+, v17.5+), candyget will use [the native `fetch` API](https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch). This can be set to your custom `fetch` API implementation like:
+    ```js
+    const fetch = require("your-favorite-fetch-lib");
+    const AbortController = require("your-favorite-abortController-polyfill");
+    const result = await candyget(METHOD, URL, RETURN_TYPE, {
+      fetch: {
+        fetch,
+        AbortController,
+      }
+    });
+    ```
+    You have to pass both `fetch` and `AbortController`, passing only one of them are not allowed. Default: `false`
+
   
   > All these properties are optional in most cases.  
   > Passing `null` or `undefined` as `options` equals passing `{}`.  
