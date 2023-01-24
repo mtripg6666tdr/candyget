@@ -1019,7 +1019,7 @@ describe("CandyGet Tests", function(){
           } : true;
           if(disableFromWeb){
             // @ts-expect-error 2322
-            Readable.fromWeb = undefined;
+            delete Readable.fromWeb
           }
         });
         
