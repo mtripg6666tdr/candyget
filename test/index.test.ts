@@ -7,6 +7,10 @@ import nock from "nock";
 import candygetTS from "../src";
 import crypto from "crypto";
 import { Readable } from "stream";
+import nodeFetch from "node-fetch";
+import undici from "undici";
+
+console.log("Test running on", process.versions.node);
 
 const candyget = (() => {
   try{
@@ -18,6 +22,7 @@ const candyget = (() => {
 })() as typeof candygetTS;
 
 nock.disableNetConnect();
+candyget.defaultOptions.optoutFetch = true;
 
 function nockUrl(path:string = "", http:boolean = false){
   return `http${http ? "" : "s"}://nocking-host.candyget${path}`;
@@ -597,7 +602,7 @@ describe("CandyGet Tests", function(){
           });
           scope.done();
           assert.equal(result.statusCode, 302);
-          assert.equal(result.headers.location, "/redirect-to")
+          assert.equal(result.headers.location, nockUrl("/redirect-to"))
           assert.equal(result.body, "redirected");
         });
       });
@@ -624,7 +629,7 @@ describe("CandyGet Tests", function(){
           assert.equal(result.statusCode, 302);
           assert.equal(result.url.pathname, "/path3");
           assert.equal(result.body, "redirected");
-          assert.equal(result.headers.location, "/path4");
+          assert.equal(result.headers.location, nockUrl("/path4"));
         });
       });
   
@@ -877,7 +882,7 @@ describe("CandyGet Tests", function(){
           const result = await candyget(nockUrl("/redirect"), "string");
           scope.done();
           assert.equal(result.statusCode, 302);
-          assert.equal(result.headers.location, "/redirect-to")
+          assert.equal(result.headers.location, nockUrl("/redirect-to"))
           assert.equal(result.body, "redirected");
         });
       });
@@ -988,5 +993,73 @@ describe("CandyGet Tests", function(){
         });
       })
     })
+  });
+
+  describe("#Fetch API", function(){
+    this.beforeAll(() => {
+      nock.enableNetConnect();
+    });
+    this.afterAll(() => {
+      delete (candyget.defaultOptions as any)["f"];
+      nock.disableNetConnect();
+    });
+
+    function testFetch(tag:string, f?:any){
+      describe(tag, function(){
+        (candyget.defaultOptions as any)["f"] = f;
+        describe("#Get", function(){
+          it("request is fine", async function(){
+            const result = await candyget("https://httpbin.org/get", "json", {
+              optoutFetch: false,
+              headers: {
+                "X-Custom-Header": "1"
+              }
+            });
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.headers["X-Custom-Header"], 1);
+          });
+        });
+
+        describe("#Post", function(){
+          it("request is fine", async function(){
+            const result = await candyget.post("https://httpbin.org/post", "json", {
+              optoutFetch: false,
+            }, "foo bar request here");
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.data, "foo bar request here");
+          });
+        });
+
+        describe("#Head", function(){
+          it("request is fine", async function(){
+            const result = await candyget.head("https://httpbin.org/get", {
+              optoutFetch: false,
+            });
+            assert.equal(result.statusCode, 200);
+          });
+        });
+
+        describe("#Redirect", function(){
+          it("response is 302", async function(){
+            const result = await candyget.empty("https://httpbin.org/absolute-redirect/10", {
+              optoutFetch: false,
+              maxRedirects: 3
+            });
+            assert.equal(result.statusCode, 302);
+          });
+
+          it("response is 200", async function(){
+            const result = await candyget.json("https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fget&status_code=302", {
+              optoutFetch: false,
+            });
+            assert.equal(result.statusCode, 200);
+          });
+        });
+      });
+    }
+
+    testFetch("Default");
+    testFetch("node-fetch", nodeFetch); 
+    testFetch("undici", undici.fetch);
   });
 });

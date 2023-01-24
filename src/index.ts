@@ -1,12 +1,23 @@
-import type { IncomingHttpHeaders, Agent, ClientRequest, IncomingMessage } from "http";
-import type { Readable, TransformOptions } from "stream";
+import type { IncomingHttpHeaders, Agent } from "http";
+import type { Readable as ReadableType, TransformOptions } from "stream";
+import type { ReadableStream } from "stream/web";
 
 // Import these module by `require` instead of `import` in order to prevent from generating helper methods.
 const requireLocal = require;
+const tryRequire = (mod:string) => {
+  try{
+    return requireLocal(mod);
+  }
+  catch{
+    return null;
+  }
+};
 const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
-const { PassThrough, pipeline, Stream } = requireLocal("stream") as typeof import("stream");
+const { PassThrough, pipeline, Readable, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
+const globalFetch = (typeof fetch == "function" && fetch) || (tryRequire("node-fetch") as typeof import("node-fetch").default) || (tryRequire("undici") as typeof import("undici"))?.fetch;
+const globalAbortController = (typeof AbortController == "function" && AbortController) || (tryRequire("abort-controoler") as typeof import("abort-controller").default);
 
 /**
  * Represents options of candyget
@@ -37,6 +48,10 @@ type Opts = {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?:any,
+  /**
+   * Prevent from using fetch API
+   */
+  optoutFetch?:boolean,
 };
 
 /**
@@ -80,7 +95,7 @@ type BodyTypes = {
   /**
    * Requested resource will be return as Readable stream
    */
-  stream: Readable,
+  stream: ReadableType,
   /**
    * Requested resource will be return as parsed JSON. if failed to parse, return as string;
    */
@@ -126,7 +141,8 @@ const isString = ((target:any) => typeof target == "string") as (target:any) => 
 const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
 const noop = () => {/* empty */};
 const createEmpty = () => objectAlias.create(null) as EmptyObject;
-const destroy = (...destroyable:{destroyed?:boolean, destroy:()=>void}[]) => destroyable.map(stream => {
+type destroyable = {destroyed?:boolean, destroy:()=>void};
+const destroy = (...destroyable:destroyable[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
 
@@ -137,8 +153,8 @@ type CGResult<T extends keyof BodyTypes> = {
   statusCode:number,
   headers:IncomingHttpHeaders,
   body:BodyTypes[T],
-  request:ClientRequest,
-  response:IncomingMessage,
+  request:unknown,
+  response:unknown,
   url:URL,
 };
 
@@ -312,12 +328,12 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method:HttpMethods, url:URL, returnType:T, overrideOptions:Opts|TypedOpts<U>, body:any|null;
   try{
-    const objurl = new URL(urlOrMethod);
+    const objurl = new URL(isString(urlOrMethod) ? urlOrMethod : urlOrMethod.href);
     // (url:UrlResolvable, returnType:T, options?:Options, body?:BodyResolvable):ReturnTypes[T];
     url = objurl;
     returnType = returnTypeOrUrl as T;
     overrideOptions = optionsOrReturnType as TypedOpts<U>|Opts || {};
-    body = bodyOrOptions || overrideOptions.body as Body|null;
+    body = bodyOrOptions || overrideOptions.body;
     // determine method automatically
     method = body ? "POST" : "GET";
   }
@@ -334,10 +350,10 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
   if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
   if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
-  if(!isObjectType(url, URL)) return genRejectedPromise(genInvalidParamMessage("url"));
+  if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
+  const headers = objectAlias.assign(createEmpty(), defaultOptions.headers, (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
   // once clear headers
   options.headers = createEmpty();
   // assign headers with keys in lower case
@@ -358,25 +374,162 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       delete options.headers["cookie"];
       delete options.headers["authorization"];
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const redirect = (statusCode:number, location:string|undefined|null, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
+      if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
+        const redirectTo = location;
+        if(redirectTo){
+          redirectCount++;
+          setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
+        }else{
+          reject(genError("no location header found"));
+        }
+        return true;
+      }
+      return false;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const resolveStream = (resources:destroyable[], partialResult:Omit<CGResult<T>, "body">, stream:ReadableType, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
+      let bufs:Buffer[]|null = [];
+      stream
+        .on("data", buf => bufs!.push(buf))
+        .on("end", () => {
+          destroy(...resources);
+          const result = bufferAlias.concat(bufs!) as unknown as BodyTypes[T];
+          const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
+          let body = rawBody;
+          if(returnType == "json"){
+            if("validator" in options && typeof options.validator === "function"){
+              body = jsonAlias.parse(body);
+              if(!options.validator(body)) reject(genError("invalid response body"));
+            }else{
+              try{
+                body = jsonAlias.parse(body);
+              }
+              catch{/* empty */}
+            }
+          }
+          resolve({
+            body,
+            ...partialResult
+          });
+          bufs = null;
+        })
+        .on("error", reject)
+      ;
+    };
+    const resolveBody = () => {
+      return !body
+      ? undefined
+      : isString(body) || isObjectType(body, bufferAlias)
+      ? body
+      : jsonAlias.stringify(body);
+    };
     return new Promise<CGResult<T>>((resolve, reject) => {
-      const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs]?.request(requestUrl, {
+      if(!options.optoutFetch && globalFetch && globalAbortController){
+        const abortController = new globalAbortController();
+        const timeout = setTimeout(() => {
+          abortController.abort();
+        }, options.timeout);
+        new Promise<string|Buffer|undefined>((_resolve, _reject) => {
+          if(body instanceof Stream){
+            const buf:Buffer[] = [];
+            body
+              .on("data", chunk => buf.push(chunk))
+              .on("end", () => _resolve(bufferAlias.concat(buf)))
+              .on("error", _reject)
+            ;
+          }else{
+            _resolve(resolveBody());
+          }
+        }).then(fineBody => {
+          // use options.f for custom fetch implementation
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (((options as any).f || globalFetch) as typeof globalFetch)(requestUrl.href, {
+            method: method,
+            headers: options.headers,
+            agent: options.agent,
+            redirect: "manual",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            signal: abortController.signal as any,
+            body: fineBody,
+          }).then(async res => {
+            clearTimeout(timeout);
+            if(redirect(res.status, res.headers.get("location"), resolve, reject)){
+              if(res.body){
+                res.arrayBuffer();
+              }
+              return;
+            }
+            const headers:{[key:string]:string} = createEmpty();
+            [...res.headers.keys()].map(key => headers[key.toLowerCase()] = res.headers.get(key)!);
+            const partialResult = {
+              headers,
+              statusCode: res.status,
+              request: null,
+              response: res,
+              url: requestUrl,
+            };
+            if(returnType == "empty" || !res.body){
+              res.arrayBuffer();
+              resolve({
+                body: null as unknown as BodyTypes[T],
+                ...partialResult,
+              });
+              return;
+            }
+            const stream = new PassThrough(options.transformerOptions);
+            if("pipe" in res.body){
+              // handle node-fetch's fetch
+              pipeline(res.body, stream, noop);
+            }else if("fromWeb" in Readable){
+              pipeline(Readable.fromWeb(res.body as unknown as ReadableStream), stream, noop);
+            }else{
+              setImmediate(async () => {
+                const reader = (res.body! as ReadableStream<Uint8Array>).getReader();
+                  let done = false;
+                  while(!done){
+                    const chunk = await reader.read();
+                    done = chunk.done;
+                    if(chunk.value){
+                      stream.write(chunk.value);
+                    }
+                  }
+                  stream.end();
+              });
+            }
+            if(returnType == "stream"){
+              resolve({
+                body: stream as unknown as BodyTypes[T],
+                ...partialResult,
+              });
+            }else{
+              resolveStream([], partialResult, stream, resolve, reject);
+            }
+          }).catch(er => {
+            if(er.message?.includes("abort")){
+              reject(genError("timed out"));
+            }else{
+              reject(er);
+            }
+          });
+        }).catch(reject); 
+        return;
+      }
+      const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {
         method: method,
         headers: options.headers,
         timeout: options.timeout,
         agent: options.agent,
       }, (res) => {
         const statusCode = res.statusCode!;
-        if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
-          const redirectTo = res.headers.location;
-          if(isString(redirectTo)){
-            redirectCount++;
-            setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
-            destroy(req, res);
-            return;
-          }else{
-            reject(genError("no location header found"));
-          }
+        // handle redirect
+        if(redirect(statusCode, res.headers.location, resolve, reject)){
+          destroy(req, res);
+          return;
         }
+        // normalize the location header
+        if(res.headers.location) res.headers.location = new URL(res.headers.location, requestUrl.href).href;
         const partialResult = {
           headers: res.headers,
           statusCode,
@@ -392,7 +545,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }
-        const pipelineFragment:Readable[] = [res];
+        const pipelineFragment:ReadableType[] = [res];
         const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
         if(contentEncoding == "gzip"){
           pipelineFragment.push(zlib.createGunzip());
@@ -414,51 +567,22 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }else{
-          let bufs:Buffer[]|null = [];
-          (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
-            .on("data", buf => bufs!.push(buf))
-            .on("end", () => {
-              destroy(req, res);
-              const result = bufferAlias.concat(bufs!) as unknown as BodyTypes[T];
-              const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
-              let body = rawBody;
-              if(returnType == "json"){
-                if("validator" in options && typeof options.validator === "function"){
-                  body = jsonAlias.parse(body);
-                  if(!options.validator(body)) reject(genError("invalid response body"));
-                }else{
-                  try{
-                    body = jsonAlias.parse(body);
-                  }
-                  catch{/* empty */}
-                }
-              }
-              resolve({
-                body,
-                ...partialResult
-              });
-              bufs = null;
-            })
-            .on("error", reject)
-          ;
+          resolveStream([req, res], partialResult, pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop) as unknown as ReadableType, resolve, reject);
+          return;
         }
       })
         ?.on("error", reject)
         ?.on("timeout", () => reject(genError("timed out")))
       ;
-      if(!req) reject(genError(genInvalidParamMessage("url")));
       if(body && isObjectType(body, Stream)){
         body
-          .on("error", reject)
+          .on("error", (er) => {
+            reject(er);
+            req.destroy();
+          })
           .pipe(req);
       }else{
-        req.end(
-          !body
-          ? undefined
-          : isString(body) || isObjectType(body, bufferAlias)
-          ? body
-          : jsonAlias.stringify(body)
-        );
+        req.end(resolveBody());
       }
     });
   };
@@ -496,7 +620,8 @@ const defaultOptions = {
   maxRedirects: 10,
   transformerOptions: {
     autoDestroy: true,
-  }
+  },
+  optoutFetch: false,
 };
 
 candygetType.defaultOptions = objectAlias.assign({}, defaultOptions);
