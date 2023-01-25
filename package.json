@@ -5,7 +5,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "mocha -- --require ts-node/register test/*.ts",
+    "test": "run-p test:serve test:unit",
+    "test:serve": "ts-node test/server.ts",
+    "test:unit": "mocha -- --require ts-node/register test/*.test.ts",
     "coverage": "nyc -r=html -r=text -r=lcov npm test",
     "build": "swc src -d .&&tsc",
     "lint": "eslint ."
@@ -39,9 +41,12 @@
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.11.18",
+    "@types/node-fetch": "^2.6.2",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
+    "abort-controller": "^3.0.0",
     "chai": "^4.3.7",
+    "cross-env": "^7.0.3",
     "eslint": "^8.30.0",
     "eslint-plugin-destructuring-import-spacing": "^1.0.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
@@ -49,8 +54,11 @@
     "eslint-plugin-node": "^11.1.0",
     "mocha": "^10.2.0",
     "nock": "^13.3.0",
+    "node-fetch": "^2.6.7",
+    "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "undici": "^5.16.0"
   }
 }

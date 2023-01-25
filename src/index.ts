@@ -1,12 +1,22 @@
-import type { IncomingHttpHeaders, Agent, ClientRequest, IncomingMessage } from "http";
-import type { Readable, TransformOptions } from "stream";
+import type { IncomingHttpHeaders, Agent } from "http";
+import type { Readable as ReadableType, TransformOptions } from "stream";
+import type { ReadableStream } from "stream/web";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isObject = ((target:any) => typeof target == "object") as (target:any) => target is object;
 
 // Import these module by `require` instead of `import` in order to prevent from generating helper methods.
 const requireLocal = require;
 const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
-const { PassThrough, pipeline, Stream } = requireLocal("stream") as typeof import("stream");
+const { PassThrough, pipeline, Readable, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
+const globalFetch = (typeof fetch == "function" && fetch);
+const globalAbortController = (typeof AbortController == "function" && AbortController);
 
 /**
  * Represents options of candyget
@@ -37,6 +47,15 @@ type Opts = {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?:any,
+  /**
+   * Prevent from using fetch API or passing custom fetch implementation
+   */
+  fetch?:boolean|{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fetch:(url:string, init:any)=>any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    AbortController:new () => any,
+  },
 };
 
 /**
@@ -69,26 +88,11 @@ type RequireBody<V extends Opts> = OmitBody<V> & {
  * Represents candyget's return types, with typed body
  */
 type BodyTypes = {
-  /**
-   * Requested resource will be return as string
-   */
   string: string,
-  /**
-   * Requested resource will be return as buffer
-   */
   buffer: Buffer,
-  /**
-   * Requested resource will be return as Readable stream
-   */
-  stream: Readable,
-  /**
-   * Requested resource will be return as parsed JSON. if failed to parse, return as string;
-   */
+  stream: ReadableType,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: any,
-  /**
-   * Only do a request. Response will not be parsed. You can handle the response if necessary
-   */
   empty: null,
 };
 
@@ -103,9 +107,12 @@ const HttpLibs = {
   "https:": https,
 } as const;
 const redirectStatuses:Readonly<number[]> = [301, 302, 303, 307, 308];
-const CONTENT_TYPE = "content-type";
+const CONTENT_TYPE = "Content-Type";
+const TIMED_OUT = "timed out";
 const objectAlias = Object;
 const bufferAlias = Buffer;
+const promiseAlias = Promise;
+const urlAlias = URL;
 const jsonAlias = JSON;
 
 /**
@@ -119,16 +126,14 @@ class CandyGetError extends Error {
 }
 const genInvalidParamMessage = (name:string) => `Invalid Param:${name}`;
 const genError = (message:string) => new CandyGetError(message);
-const genRejectedPromise = (message:string) => Promise.reject(genError(message));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isString = ((target:any) => typeof target == "string") as (target:any) => target is string;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isObjectType = (<T extends abstract new (...args: any) => any>(target:any, type:T) => target instanceof type) as <T extends abstract new (...args: any) => any>(target:any, type:T) => target is InstanceType<T>;
+const genRejectedPromise = (message:string) => promiseAlias.reject(genError(message));
 const noop = () => {/* empty */};
 const createEmpty = () => objectAlias.create(null) as EmptyObject;
-const destroy = (...destroyable:{destroyed?:boolean, destroy:()=>void}[]) => destroyable.map(stream => {
+type destroyable = {destroyed?:boolean, destroy:()=>void};
+const destroy = (...destroyable:destroyable[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
+const normalizeKey = (key:string) => key.split("-").map(e => [e[0].toUpperCase(), e.slice(1).toLowerCase()].join("")).join("-");
 
 /**
  * Represents candyget's result type.
@@ -137,8 +142,8 @@ type CGResult<T extends keyof BodyTypes> = {
   statusCode:number,
   headers:IncomingHttpHeaders,
   body:BodyTypes[T],
-  request:ClientRequest,
-  response:IncomingMessage,
+  request:unknown,
+  response:unknown,
   url:URL,
 };
 
@@ -312,12 +317,12 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method:HttpMethods, url:URL, returnType:T, overrideOptions:Opts|TypedOpts<U>, body:any|null;
   try{
-    const objurl = new URL(urlOrMethod);
+    const objurl = new urlAlias(isString(urlOrMethod) ? urlOrMethod : urlOrMethod.href);
     // (url:UrlResolvable, returnType:T, options?:Options, body?:BodyResolvable):ReturnTypes[T];
     url = objurl;
     returnType = returnTypeOrUrl as T;
     overrideOptions = optionsOrReturnType as TypedOpts<U>|Opts || {};
-    body = bodyOrOptions || overrideOptions.body as Body|null;
+    body = bodyOrOptions || overrideOptions.body;
     // determine method automatically
     method = body ? "POST" : "GET";
   }
@@ -325,7 +330,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
     if(!isString(urlOrMethod)) return genRejectedPromise(genInvalidParamMessage("url"));
     // (method:HttpMethods, url:UrlResolvable, returnType:T, body?:BodyResolvable):ReturnTypes[T];
     method = urlOrMethod.toUpperCase() as HttpMethods;
-    url = isString(returnTypeOrUrl) ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
+    url = isString(returnTypeOrUrl) ? new urlAlias(returnTypeOrUrl) : returnTypeOrUrl;
     returnType = optionsOrReturnType as T;
     overrideOptions = bodyOrOptions as TypedOpts<U>|Opts || {};
     body = rawBody || overrideOptions.body || null;
@@ -333,15 +338,20 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // validate params (not strictly)
   if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
   if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
-  if(typeof overrideOptions != "object") return genRejectedPromise(genInvalidParamMessage("options"));
-  if(!isObjectType(url, URL)) return genRejectedPromise(genInvalidParamMessage("url"));
+  if(!isObject(overrideOptions)) return genRejectedPromise(genInvalidParamMessage("options"));
+  if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers = objectAlias.assign(createEmpty(), defaultOptions.headers, (candyget as CGExport).defaultOptions.headers, overrideOptions.headers);
-  // once clear headers
-  options.headers = createEmpty();
-  // assign headers with keys in lower case
-  objectAlias.keys(headers).map(key => options.headers[key.toLowerCase()] = headers[key]);
+  // normalize headers in defaultOptions
+  const defaultOptionsHeaders:{[key:string]:string} = createEmpty();
+  if(!(candyget as CGExport).defaultOptions.headers) (candyget as CGExport).defaultOptions.headers = {};
+  objectAlias.keys((candyget as CGExport).defaultOptions.headers!).map(key => defaultOptionsHeaders[normalizeKey(key)] = (candyget as CGExport).defaultOptions.headers![key]);
+  // normalize headers in override options
+  const overrideOptionsHeaders:{[key:string]:string} = createEmpty();
+  if(!overrideOptions.headers) overrideOptions.headers = {};
+  objectAlias.keys(overrideOptions.headers).map(key => overrideOptionsHeaders[normalizeKey(key)] = overrideOptions.headers![key]);
+  // merge headers
+  options.headers = objectAlias.assign(defaultOptionsHeaders, overrideOptionsHeaders);
   // if json was passed and content-type is not set, set automatically
   if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
@@ -355,28 +365,177 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   const executeRequest = (requestUrl:URL) => {
     // delete credentials to prevent from leaking credentials
     if(redirectCount > 0 && originalUrl.host !== requestUrl.host){
-      delete options.headers["cookie"];
-      delete options.headers["authorization"];
+      delete options.headers["Cookie"];
+      delete options.headers["Authorization"];
     }
-    return new Promise<CGResult<T>>((resolve, reject) => {
-      const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs]?.request(requestUrl, {
+    // handle redirect if redirected, return true, otherwise false.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const redirect = (statusCode:number, location:string|undefined|null, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
+      if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
+        const redirectTo = location;
+        if(redirectTo){
+          redirectCount++;
+          setImmediate(() => resolve(executeRequest(new urlAlias(redirectTo, requestUrl))));
+        }else{
+          reject(genError("no location header found"));
+        }
+        return true;
+      }
+      return false;
+    };
+    // handle the response body as stream and resolve as raw stream, or as json, string, and so on.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const resolveStream = (resources:destroyable[], partialResult:Omit<CGResult<T>, "body">, stream:ReadableType, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
+      let bufs:Buffer[]|null = [];
+      stream
+        .on("data", buf => bufs!.push(buf))
+        .on("end", () => {
+          destroy(...resources);
+          const result = bufferAlias.concat(bufs!) as unknown as BodyTypes[T];
+          const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
+          let body = rawBody;
+          if(returnType == "json"){
+            if("validator" in options && typeof options.validator == "function"){
+              body = jsonAlias.parse(body);
+              if(!options.validator(body)) reject(genError("invalid response body"));
+            }else{
+              try{
+                body = jsonAlias.parse(body);
+              }
+              catch{/* empty */}
+            }
+          }
+          resolve({
+            body,
+            ...partialResult
+          });
+          bufs = null;
+        })
+        .on("error", reject)
+      ;
+    };
+    // resolve body into sendable form
+    const resolveBody = () => {
+      return !body
+      ? undefined
+      : isString(body) || isObjectType(body, bufferAlias)
+      ? body
+      : jsonAlias.stringify(body);
+    };
+    return new promiseAlias<CGResult<T>>((resolve, reject) => {
+      const [ fetch, AbortController ] = (() => {
+        if(options.fetch){
+          if(isObject(options.fetch)){
+            return [options.fetch.fetch, options.fetch.AbortController];
+          }else{
+            return [globalFetch, globalAbortController];
+          }
+        }else{
+          return [];
+        }
+      })() as [(typeof globalFetch)|null, (typeof globalAbortController)|null];
+      if(fetch && AbortController){
+        const abortController = new AbortController();
+        const timeout = setTimeout(() => {
+          abortController.abort();
+        }, options.timeout);
+        new promiseAlias<string|Buffer|undefined>((_resolve, _reject) => {
+          if(isObjectType(body, Stream)){
+            const buf:Buffer[] = [];
+            body
+              .on("data", chunk => buf.push(chunk))
+              .on("end", () => _resolve(buf.every(e => isString(e)) ? buf.join("") : bufferAlias.concat(buf)))
+              .on("error", _reject)
+            ;
+          }else{
+            _resolve(resolveBody());
+          }
+        })
+          .then(fineBody => fetch(requestUrl.href, {
+            method: method,
+            headers: options.headers,
+            agent: options.agent,
+            redirect: "manual",
+            signal: abortController.signal,
+            body: fineBody,
+          } as RequestInit))
+          .then(async res => {
+            clearTimeout(timeout);
+            if(redirect(res.status, res.headers.get("location"), resolve, reject)){
+              res.arrayBuffer().catch(noop);
+              return;
+            }
+            const headers:{[key:string]:string} = createEmpty();
+            [...res.headers.keys()].map(key => headers[key.toLowerCase()] = res.headers.get(key)!);
+            const partialResult = {
+              headers,
+              statusCode: res.status,
+              request: null,
+              response: res,
+              url: requestUrl,
+            };
+            if(returnType == "empty" || !res.body){
+              res.arrayBuffer().catch(noop);
+              resolve({
+                body: null as unknown as BodyTypes[T],
+                ...partialResult,
+              });
+              return;
+            }
+            const stream = new PassThrough(options.transformerOptions);
+            if("pipe" in res.body){
+              // handle node-fetch's fetch
+              pipeline(res.body as unknown as ReadableStream, stream, noop);
+            }else if("fromWeb" in Readable){
+              pipeline(Readable.fromWeb(res.body as unknown as ReadableStream), stream, noop);
+            }else{
+              setImmediate(async () => {
+                const reader = (res.body! as ReadableStream<Uint8Array>).getReader();
+                  let done = false;
+                  while(!done){
+                    const chunk = await reader.read();
+                    done = chunk.done;
+                    if(chunk.value){
+                      stream.write(chunk.value);
+                    }
+                  }
+                  stream.end();
+              });
+            }
+            if(returnType == "stream"){
+              resolve({
+                body: stream as unknown as BodyTypes[T],
+                ...partialResult,
+              });
+            }else{
+              resolveStream([], partialResult, stream, resolve, reject);
+            }
+          })
+          .catch(er => {
+            // TODO: implement better way to judge the aborted error or not
+            if(er.message?.includes("abort")){
+              reject(genError(TIMED_OUT));
+            }else{
+              reject(er);
+            }
+          })
+        ;
+        return;
+      }
+      const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {
         method: method,
         headers: options.headers,
         timeout: options.timeout,
         agent: options.agent,
       }, (res) => {
         const statusCode = res.statusCode!;
-        if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
-          const redirectTo = res.headers.location;
-          if(isString(redirectTo)){
-            redirectCount++;
-            setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
-            destroy(req, res);
-            return;
-          }else{
-            reject(genError("no location header found"));
-          }
+        // handle redirect
+        if(redirect(statusCode, res.headers.location, resolve, reject)){
+          destroy(req, res);
+          return;
         }
+        // normalize the location header
+        if(res.headers.location) res.headers.location = new urlAlias(res.headers.location, requestUrl.href).href;
         const partialResult = {
           headers: res.headers,
           statusCode,
@@ -392,7 +551,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }
-        const pipelineFragment:Readable[] = [res];
+        const pipelineFragment:ReadableType[] = [res];
         const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
         if(contentEncoding == "gzip"){
           pipelineFragment.push(zlib.createGunzip());
@@ -414,51 +573,22 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }else{
-          let bufs:Buffer[]|null = [];
-          (pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop))
-            .on("data", buf => bufs!.push(buf))
-            .on("end", () => {
-              destroy(req, res);
-              const result = bufferAlias.concat(bufs!) as unknown as BodyTypes[T];
-              const rawBody = (returnType == "buffer" ? result : result.toString()) as unknown as BodyTypes[T];
-              let body = rawBody;
-              if(returnType == "json"){
-                if("validator" in options && typeof options.validator === "function"){
-                  body = jsonAlias.parse(body);
-                  if(!options.validator(body)) reject(genError("invalid response body"));
-                }else{
-                  try{
-                    body = jsonAlias.parse(body);
-                  }
-                  catch{/* empty */}
-                }
-              }
-              resolve({
-                body,
-                ...partialResult
-              });
-              bufs = null;
-            })
-            .on("error", reject)
-          ;
+          resolveStream([req, res], partialResult, pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop) as unknown as ReadableType, resolve, reject);
+          return;
         }
       })
-        ?.on("error", reject)
-        ?.on("timeout", () => reject(genError("timed out")))
+        .on("error", reject)
+        .on("timeout", () => reject(genError(TIMED_OUT)))
       ;
-      if(!req) reject(genError(genInvalidParamMessage("url")));
       if(body && isObjectType(body, Stream)){
         body
-          .on("error", reject)
+          .on("error", (er) => {
+            reject(er);
+            req.destroy();
+          })
           .pipe(req);
       }else{
-        req.end(
-          !body
-          ? undefined
-          : isString(body) || isObjectType(body, bufferAlias)
-          ? body
-          : jsonAlias.stringify(body)
-        );
+        req.end(resolveBody());
       }
     });
   };
@@ -490,13 +620,15 @@ const defaultOptions = {
   timeout: 10000,
   headers: {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    "Accept-Language": "*",
     "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Candyget/0.0.0",
   } as {[key:string]:string},
   maxRedirects: 10,
   transformerOptions: {
     autoDestroy: true,
-  }
+  },
+  fetch: false,
 };
 
 candygetType.defaultOptions = objectAlias.assign({}, defaultOptions);

@@ -7,6 +7,11 @@ import nock from "nock";
 import candygetTS from "../src";
 import crypto from "crypto";
 import { Readable } from "stream";
+import nodeFetch from "node-fetch";
+import undici from "undici";
+import AbortController from "abort-controller";
+
+console.log("Test running on", process.versions.node);
 
 const candyget = (() => {
   try{
@@ -16,8 +21,6 @@ const candyget = (() => {
     return candygetTS;
   }
 })() as typeof candygetTS;
-
-nock.disableNetConnect();
 
 function nockUrl(path:string = "", http:boolean = false){
   return `http${http ? "" : "s"}://nocking-host.candyget${path}`;
@@ -38,7 +41,28 @@ const JQUERY_HASH = "A6F3F0FAEA4B3D48E03176341BEF0ED3151FFBF226D4C6635F1C6039C05
 const VSCODE_PNG_HASH = "E7A0F94AF1BFF6E01E6A4C0C6297F2B2D3E1F7BAEDE6C98143E33728DBDA5ED0";
 
 describe("CandyGet Tests", function(){
-  this.afterEach(() => nock.cleanAll())
+  this.beforeAll(async function(){
+    this.timeout(50 * 500);
+    let success = false;
+    console.log("Waiting for Mock server...");
+    for(let i = 1; i < 10; i++){
+      console.log(".");
+      await new Promise(resolve => setTimeout(resolve, 500 * i));
+      success = await nodeFetch("http://localhost:8891/hello").then(res => res.ok);
+    }
+    if(!success) throw new Error("Mock server has not been ready in time");
+    console.log("Mock server ready");
+
+    candyget.defaultOptions.fetch = false;
+    nock.disableNetConnect();
+  });
+  this.afterEach(function(){
+    nock.cleanAll()
+  });
+  this.afterAll(() => new Promise(resolve => {
+    nock.enableNetConnect();
+    nodeFetch("http://localhost:8891/shutdown").then(res => res.text()).then(resolve);
+  }));
 
   describe("#Http", function(){
     describe("#Get", function(){
@@ -470,8 +494,9 @@ describe("CandyGet Tests", function(){
       const scope = nock(nockUrl(), {
         reqheaders: {
           "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+          "accept-Language": "*",
           "accept-encoding": "gzip, deflate, br",
-          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Candyget/0.0.0",
         }
       })
         .get("/get")
@@ -597,7 +622,7 @@ describe("CandyGet Tests", function(){
           });
           scope.done();
           assert.equal(result.statusCode, 302);
-          assert.equal(result.headers.location, "/redirect-to")
+          assert.equal(result.headers.location, nockUrl("/redirect-to"))
           assert.equal(result.body, "redirected");
         });
       });
@@ -624,7 +649,7 @@ describe("CandyGet Tests", function(){
           assert.equal(result.statusCode, 302);
           assert.equal(result.url.pathname, "/path3");
           assert.equal(result.body, "redirected");
-          assert.equal(result.headers.location, "/path4");
+          assert.equal(result.headers.location, nockUrl("/path4"));
         });
       });
   
@@ -833,7 +858,7 @@ describe("CandyGet Tests", function(){
       Object.assign(candyget.defaultOptions, originalDefaultOptions);
     });
 
-    describe("#Custom Headers", function(){
+    describe("#Custom headers", function(){
       it("Status Code is ok", async function(){
         candyget.defaultOptions.headers = Object.assign(candyget.defaultOptions.headers || {}, {
           "x-requested-with": "XmlHttpRequest",
@@ -844,6 +869,47 @@ describe("CandyGet Tests", function(){
             "x-requested-with": "XmlHttpRequest",
             "x-for-test": "1",
           }
+        })
+          .get("/get")
+          .reply(200);
+        const result = await candyget(nockUrl("/get"), "json");
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Overriden custom headers", function(){
+      it("Status Code is ok", async function(){
+        candyget.defaultOptions.headers = Object.assign(candyget.defaultOptions.headers || {}, {
+          "x-requested-with": "NoXmlHttpRequest",
+          "X-for-test": "-1",
+        });
+        const scope = nock(nockUrl(), {
+          reqheaders: {
+            "x-requested-with": "XmlHttpRequest",
+            "x-for-test": "1",
+            "accept": "*/*",
+          }
+        })
+          .get("/get")
+          .reply(200);
+        const result = await candyget(nockUrl("/get"), "json", {
+          headers: {
+            "x-requested-with": "XmlHttpRequest",
+            "X-for-test": "1",
+            "Accept": "*/*",
+          }
+        });
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#No default custom headers", function(){
+      it("Status Code is ok", async function(){
+        delete candyget.defaultOptions.headers;
+        const scope = nock(nockUrl(), {
+          badheaders: ["content-type", "accept", "accept-encoding", "accept-language", "user-agent"]
         })
           .get("/get")
           .reply(200);
@@ -877,7 +943,7 @@ describe("CandyGet Tests", function(){
           const result = await candyget(nockUrl("/redirect"), "string");
           scope.done();
           assert.equal(result.statusCode, 302);
-          assert.equal(result.headers.location, "/redirect-to")
+          assert.equal(result.headers.location, nockUrl("/redirect-to"))
           assert.equal(result.body, "redirected");
         });
       });
@@ -986,7 +1052,152 @@ describe("CandyGet Tests", function(){
             maxRedirects: NaN,
           }), genErrorObject("Invalid Param:maxRedirects"));
         });
-      })
-    })
+      });
+    });
+
+    describe("#Body that occurs an error", async function(){
+      it("Error", async function(){
+        nock(nockUrl())
+          .post("/validate")
+          .reply(200);
+        const file = new Readable({
+          read(){
+            this.destroy(new Error("some error!"));
+          }
+        });
+        await assert.rejects(candyget(nockUrl("/validate"), "string", {}, file));
+        file.destroy();
+      });
+    });
+  });
+
+  describe("#Fetch API", function(){
+    // @ts-expect-error 2322
+    let fromWeb:typeof Readable.fromWeb = null;
+    this.beforeAll(() => {
+      nock.enableNetConnect();
+      fromWeb = Readable.fromWeb;
+    });
+    this.afterAll(() => {
+      delete candyget.defaultOptions.fetch;
+      nock.disableNetConnect();
+      Readable.fromWeb = fromWeb;
+    });
+
+    function testFetch(tag:string, fetchImplement?:any, disableFromWeb:boolean = false){
+      describe(tag, function(){
+        this.timeout(10 * 1000);
+        this.beforeAll(() => {
+          candyget.defaultOptions.fetch = fetchImplement ? {
+            fetch: fetchImplement,
+            AbortController: AbortController
+          } : true;
+          if(disableFromWeb){
+            // @ts-expect-error 2322
+            delete Readable.fromWeb
+          }
+        });
+        
+        describe("#Get", function(){
+          it("request is fine", async function(){
+            const result = await candyget("http://localhost:8891/get", "json", {
+              headers: {
+                "X-Custom-Header": "1"
+              }
+            });
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.headers["x-custom-header"], 1);
+          });
+        });
+
+        describe("#Post", function(){
+          it("request is fine", async function(){
+            const result = await candyget.post("http://localhost:8891/post", "json", {}, Readable.from(Buffer.from("foo bar request here")));
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.data, "foo bar request here");
+          });
+        });
+
+        describe("#Post (Object mode stream)", function(){
+          it("request is fine", async function(){
+            const result = await candyget.post("http://localhost:8891/post", "json", {}, Readable.from("foo bar request here"));
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body.data, "foo bar request here");
+          });
+        });
+
+        describe("#Head", function(){
+          it("request is fine", async function(){
+            const result = await candyget.head("http://localhost:8891/get");
+            assert.equal(result.statusCode, 200);
+          });
+        });
+
+        describe("#Redirect", function(){
+          it("response is 302", async function(){
+            const result = await candyget.empty("http://localhost:8891/absolute-redirect/10", {
+              maxRedirects: 2
+            });
+            assert.equal(result.statusCode, 302);
+          });
+
+          it("response is 200", async function(){
+            const result = await candyget.stream("http://localhost:8891/absolute-redirect/0");
+            assert.equal(result.statusCode, 200);
+            const bufs:Buffer[] = [];
+            result.body.on("data", chunk => bufs.push(chunk));
+            result.body.on("end", () => {
+              const resp = JSON.parse(Buffer.concat(bufs).toString());
+              assert.ok(resp.args);
+            })
+          });
+        });
+
+        describe("#Invalid URL", function(){
+          it("Error", async function(){
+            await assert.rejects(candyget("http://thisisnotexistshost.foobar/", "json"));
+          });
+        });
+
+        describe("#Time out", function(){
+          it("request is fine", async function(){
+            await assert.rejects(candyget("http://localhost:8891/delay", "string", {
+              timeout: 500
+            }), genErrorObject("timed out"));
+          });
+        });
+      });
+    }
+
+    testFetch("Default");
+    testFetch("node-fetch", nodeFetch); 
+    testFetch("undici", undici.fetch);
+    testFetch("Default without fromWeb", undefined, true);
+
+    describe("#Invalid fetch impelementation", function(){
+      it("fetch throws an error", async function(){
+        await assert.rejects(candyget("http://localhost:8891/get", "json", {
+          fetch: {
+            fetch(){
+              return Promise.reject(new Error("This method is not implemented"));
+            },
+            AbortController,
+          }
+        }), {
+          message: "This method is not implemented"
+        });
+      });
+
+      it("fetch throws a string", async function(){
+        await assert.rejects(candyget("http://localhost:8891/get", "json", {
+          fetch: {
+            fetch(){
+              return Promise.reject("This method is not implemented");
+            },
+            AbortController,
+          }
+        }));
+      });
+    });
   });
 });
