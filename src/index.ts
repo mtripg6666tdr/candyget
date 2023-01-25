@@ -342,10 +342,16 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers:{[key:string]:string} = createEmpty();
-  // assign headers with keys in lower case
-  objectAlias.keys(options.headers).map(key => headers[normalizeKey(key)] = options.headers[key]);
-  options.headers = headers;
+  // normalize headers in defaultOptions
+  const defaultOptionsHeaders:{[key:string]:string} = createEmpty();
+  if(!(candyget as CGExport).defaultOptions.headers) (candyget as CGExport).defaultOptions.headers = {};
+  objectAlias.keys((candyget as CGExport).defaultOptions.headers!).map(key => defaultOptionsHeaders[normalizeKey(key)] = (candyget as CGExport).defaultOptions.headers![key]);
+  // normalize headers in override options
+  const overrideOptionsHeaders:{[key:string]:string} = createEmpty();
+  if(!overrideOptions.headers) overrideOptions.headers = {};
+  objectAlias.keys(overrideOptions.headers).map(key => overrideOptionsHeaders[normalizeKey(key)] = overrideOptions.headers![key]);
+  // merge headers
+  options.headers = objectAlias.assign(defaultOptionsHeaders, overrideOptionsHeaders);
   // if json was passed and content-type is not set, set automatically
   if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
