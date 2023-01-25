@@ -356,7 +356,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
   // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
-  const headers = createEmpty();
+  const headers:{[key:string]:string} = createEmpty();
   // assign headers with keys in lower case
   objectAlias.keys(options.headers).map(key => headers[normalizeKey(key)] = options.headers[key]);
   options.headers = headers;
