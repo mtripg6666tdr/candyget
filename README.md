@@ -107,12 +107,12 @@ If a non-HTTP error (e.g., a network error) occurs, the promise will be rejected
 Otherwise the promise will be resolved as an object, which has the following properties.
   |Property Name|Description|
   |-------------|-----------|
-  |`statusCode`|HTTP status code|
-  |`headers`|[`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)|
+  |`statusCode`|HTTP status code of the response.|
+  |`headers`|[`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html), the response headers.|
   |`body`|The response body, type of which is what you specified.|
   |`request`(*deprecated*)|If candyget used `http`/`https` module, this will be [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest). On the other hand if `fetch` module or `fetch`-like module, this will be `null`.|
   |`response`(*deprecated*)|If candyget used `http`/`https` module, this will be [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage). On the other hand if `fetch` module or `fetch`-like module, this will be the `Response` object.|
-  |`url`|[`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url|
+  |`url`|[`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url.|
 
 ### candyget.defaultOptions
 
