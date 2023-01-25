@@ -1,6 +1,6 @@
 {
   "name": "candyget",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "A tiny, candy sized HTTP(S) client for Node.js",
   "main": "index.js",
   "types": "index.d.ts",
