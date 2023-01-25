@@ -93,7 +93,7 @@ When no method provided, candyget will automatically infer the method type; if b
       }
     });
     ```
-    You have to pass both `fetch` and `AbortController`, passing only one of them are not allowed. Default: `false`
+    Both `fetch` and `AbortController` are required. It is not allowed to pass only one of them. Default: `false`
 
   
   > All these properties are optional in most cases.  
