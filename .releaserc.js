@@ -1,17 +1,22 @@
-{
+module.exports = {
   "branches": [
     "main",
     {
       "name": "develop",
-      "channel": "dev"
+      "channel": "dev",
     },
-    {
+    /*{
       "name": "beta",
       "channel": "beta",
       "prerelease": true
+    },*/
+    {
+      "name": "chore/sem-release",
+      "channel": "test",
+      "prerelease": true
     }
   ],
-  "druRun": true,
+  "dryRun": true,
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
