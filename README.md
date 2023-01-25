@@ -76,14 +76,16 @@ When no method provided, candyget will automatically infer the method type; if b
   * `"json"` - `body` will be a parsed object. If failed to parse, `body` will be a `string`.
   * `"empty"` - Only make a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
 * `options` is an object that can have the following properties:
-  * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
-  * `headers` - Object that presents HTTP headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If same headers are present in both of them, the one in `options.headers` will be used.) By default, `candyget` will send `Accept`, `Accept-Encoding` and `User-Agent` headers. If you want to change the default, refer to the defaultOptions below.
-  * `agent` - `http.Agent` to pass `http.request`.
-  * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
-  * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
-  * `body` - a `string`, `Buffer`, `Stream` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.
-  * `validator` - a `function` to validate if the response body has the expected type. See [below](#response-body-validation-for-typescript-users) for more info.
-  * `fetch` - a `boolean` or an `object` including the fetch API implementation used by candyget. If it is set to `true` and in Node.js (^16.15.0 or >=17.5.0), candyget will use [the native `fetch` API](https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch). This can also be set to your custom `fetch` API implementation like:
+  |Option|Default|Description|
+  |------|-------|-----------|
+  |`timeout`|`10000`|Number to pass to `http.request`, represents the timeout in milliseconds.|
+  |`headers`|(See description)|Object that presents HTTP headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If same headers are present in both of them, the one in `options.headers` will be used.) By default, `candyget` will send `Accept`, `Accept-Encoding` and `User-Agent` headers. If you want to change the default, refer to the defaultOptions below. |
+  |`agent`||`http.Agent` to pass `http.request`.
+  |`transformerOptions`|`{autoDestroy:true}`|Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.|
+  |`maxRedirects`|`10`|`Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result.|
+  |`body`||A `string`, `Buffer`, `Stream` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.|
+  |`validator`||A `function` to validate if the response body has the expected type. See [below](#response-body-validation-for-typescript-users) for more info.|
+  |`fetch`|`false`|A `boolean` or an `object` including the fetch API implementation used by candyget. If it is set to `true` and in Node.js (^16.15.0 or >=17.5.0), candyget will use [the native `fetch` API](https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch). This can also be set to your custom `fetch` API implementation like below. Both `fetch` and `AbortController` are required. It is not allowed to pass only one of them. Default: `false`|
     ```js
     const fetch = require("your-favorite-fetch-lib");
     const AbortController = require("your-favorite-abortController-polyfill");
@@ -94,7 +96,6 @@ When no method provided, candyget will automatically infer the method type; if b
       }
     });
     ```
-    Both `fetch` and `AbortController` are required. It is not allowed to pass only one of them. Default: `false`
 
   
   > All these properties are optional in most cases.  
@@ -107,13 +108,15 @@ If a non-HTTP error (e.g., a network error) occurs, the promise will be rejected
 > **Warning**
 > If you specify `options.validator` and `candyget` fails to validate the response body, the promise will be rejected, even if there is no non-HTTP error.
 
-Otherwise the promise will be resolved as an object, which has the following properties:
-  * `statusCode` - HTTP status code
-  * `headers` - [`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)
-  * `body` - the response body, type of which is what you specified
-  * `request`(*deprecated*) - If candyget used `http`/`https` module, this will be [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest). On the other hand if `fetch` module or `fetch`-like module, this will be `null`.
-  * `response`(*deprecated*) - If candyget used `http`/`https` module, this will be [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage). On the other hand if `fetch` module or `fetch`-like module, this will be the `Response` object.
-  * `url` - [`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url
+Otherwise the promise will be resolved as an object, which has the following properties.
+  |Property Name|Description|
+  |-------------|-----------|
+  |`statusCode`|HTTP status code|
+  |`headers`|[`IncomingHttpHeaders`](https://microsoft.github.io/PowerBI-JavaScript/interfaces/_node_modules__types_node_http_d_._http_.incominghttpheaders.html)|
+  |`body`|The response body, type of which is what you specified.|
+  |`request`(*deprecated*)|If candyget used `http`/`https` module, this will be [`http.ClientRequest`](https://nodejs.org/api/http.html#class-httpclientrequest). On the other hand if `fetch` module or `fetch`-like module, this will be `null`.|
+  |`response`(*deprecated*)|If candyget used `http`/`https` module, this will be [`http.IncomingMessage`](https://nodejs.org/api/http.html#class-httpincomingmessage). On the other hand if `fetch` module or `fetch`-like module, this will be the `Response` object.|
+  |`url`|[`URL`](https://developer.mozilla.org/docs/Web/API/URL), which is the resolved url|
 
 ### candyget.defaultOptions
 
@@ -144,9 +147,9 @@ candyget("GET", URL, RETURN_TYPE, OPTIONS, BODY);
 // equals
 candyget.get(URL, RETURN_TYPE, OPTIONS, BODY);
 
-candyget("HEAD", URL, RETURN_TYPE, OPTIONS, BODY);
+candyget("HEAD", URL, "empty", OPTIONS);
 // equals
-candyget.head(URL, RETURN_TYPE, OPTIONS, BODY);
+candyget.head(URL, OPTIONS);
 ```
 By using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post`, TypeScript will throw an error unless you specify the request body)
 
