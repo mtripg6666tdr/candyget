@@ -76,7 +76,7 @@ When no method provided, candyget will automatically infer the method type; if b
   * `"empty"` - Only make a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
 * `options` is an object that can have the following properties:
   * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
-  * `headers` - Object that presents HTTP headers. By default, `candyget` will pass `Accept`, `Accept-Encoding` and `User-Agent` (If you want to change, refer to the `defaultOptions` below).
+  * `headers` - Object that presents HTTP headers. By default, `candyget` will send `Accept`, `Accept-Encoding` and `User-Agent` headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If you want to change the default, refer to the defaultOptions below)
   * `agent` - `http.Agent` to pass `http.request`.
   * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
@@ -149,7 +149,8 @@ candyget.head(URL, RETURN_TYPE, OPTIONS, BODY);
 ```
 By using these shorthand functions, TypeScript users can benefit in many ways by type checks. (For example, if you use `candyget.post`, TypeScript will throw an error unless you specify the request body)
 
-## Response body validation (for TypeScript users)
+## For TypeScript users
+### Response body validation
 
 When you specify `json` as the return type, the `body` property in the result will be typed as `any`. However, if you include a `validator` property in the options, the response body will be correctly typed.
 
@@ -169,7 +170,7 @@ console.log(result.body);
 It is beneficial to write your custom validation function, with or without using a schema validator such as ajv or zod, in the validator option. 
 Please note that if you specify a validator and the response body fails validation, the promise will be rejected even if there is no HTTP error.
 
-## For TypeScript users
+### Note
 Due to complex overloads, TypeScript may mark some errors at a different location than the actual incorrect location. In this situation, ensure that your parameters are passed correctly, for example, by avoiding duplicated request bodies or by correctly ordering the parameters. However, if you believe that it could be a bug, feel free to create a new issue.
 
 ## License
