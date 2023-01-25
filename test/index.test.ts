@@ -909,9 +909,7 @@ describe("CandyGet Tests", function(){
       it("Status Code is ok", async function(){
         delete candyget.defaultOptions.headers;
         const scope = nock(nockUrl(), {
-          reqheaders: {
-            "accept-language": "*",
-          }
+          badheaders: ["content-type", "accept", "accept-encoding", "accept-language", "user-agent"]
         })
           .get("/get")
           .reply(200);
