@@ -76,7 +76,7 @@ When no method provided, candyget will automatically infer the method type; if b
   * `"empty"` - Only make a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
 * `options` is an object that can have the following properties:
   * `timeout` - Number to pass to `http.request`, represents the timeout in milliseconds.
-  * `headers` - Object that presents HTTP headers. By default, `candyget` will send `Accept`, `Accept-Encoding` and `User-Agent` headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If you want to change the default, refer to the defaultOptions below)
+  * `headers` - Object that presents HTTP headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If same headers are present in both of them, the one in `options.headers` will be used.) By default, `candyget` will send `Accept`, `Accept-Encoding` and `User-Agent` headers. If you want to change the default, refer to the defaultOptions below.
   * `agent` - `http.Agent` to pass `http.request`.
   * `transformerOptions` - Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.
   * `maxRedirects` - `Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result. Default is `10`.
