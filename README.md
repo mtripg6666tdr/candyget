@@ -79,7 +79,7 @@ When no method provided, candyget will automatically infer the method type; if b
   |Option|Default|Description|
   |------|-------|-----------|
   |`timeout`|`10000`|Number to pass to `http.request`, represents the timeout in milliseconds.|
-  |`headers`|(See description)|Object that presents HTTP headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If same headers are present in both of them, the one in `options.headers` will be used.) By default, `candyget` will send `Accept`, `Accept-Encoding` and `User-Agent` headers. If you want to change the default, refer to the defaultOptions below. |
+  |`headers`|(See description)|Object that presents HTTP headers. HTTP headers set here and `defaultOptions.headers` will be merged and send in the request. (If same headers are present in both of them, the one in `options.headers` will be used.) By default, `candyget` will send `Accept`, `Accept-Language`, `Accept-Encoding` and `User-Agent` headers. If you want to change the default, refer to the defaultOptions below. |
   |`agent`||`http.Agent` to pass `http.request`.
   |`transformerOptions`|`{autoDestroy:true}`|Optional parameters to pass to `PassThrough`, which will be used if you set the `returnType` to `stream`.|
   |`maxRedirects`|`10`|`Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result.|
