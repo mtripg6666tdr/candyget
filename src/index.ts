@@ -88,26 +88,11 @@ type RequireBody<V extends Opts> = OmitBody<V> & {
  * Represents candyget's return types, with typed body
  */
 type BodyTypes = {
-  /**
-   * Requested resource will be return as string
-   */
   string: string,
-  /**
-   * Requested resource will be return as buffer
-   */
   buffer: Buffer,
-  /**
-   * Requested resource will be return as Readable stream
-   */
   stream: ReadableType,
-  /**
-   * Requested resource will be return as parsed JSON. if failed to parse, return as string;
-   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: any,
-  /**
-   * Only do a request. Response will not be parsed. You can handle the response if necessary
-   */
   empty: null,
 };
 
@@ -127,6 +112,7 @@ const TIMED_OUT = "timed out";
 const objectAlias = Object;
 const bufferAlias = Buffer;
 const promiseAlias = Promise;
+const urlAlias = URL;
 const jsonAlias = JSON;
 
 /**
@@ -147,7 +133,7 @@ type destroyable = {destroyed?:boolean, destroy:()=>void};
 const destroy = (...destroyable:destroyable[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
-const normalizeKey = (key:string) => key.split("-").map(e => [e[0].toUpperCase(), e.slice(1)].join("")).join("-");
+const normalizeKey = (key:string) => key.split("-").map(e => [e[0].toUpperCase(), e.slice(1).toLowerCase()].join("")).join("-");
 
 /**
  * Represents candyget's result type.
@@ -331,7 +317,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method:HttpMethods, url:URL, returnType:T, overrideOptions:Opts|TypedOpts<U>, body:any|null;
   try{
-    const objurl = new URL(isString(urlOrMethod) ? urlOrMethod : urlOrMethod.href);
+    const objurl = new urlAlias(isString(urlOrMethod) ? urlOrMethod : urlOrMethod.href);
     // (url:UrlResolvable, returnType:T, options?:Options, body?:BodyResolvable):ReturnTypes[T];
     url = objurl;
     returnType = returnTypeOrUrl as T;
@@ -344,7 +330,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
     if(!isString(urlOrMethod)) return genRejectedPromise(genInvalidParamMessage("url"));
     // (method:HttpMethods, url:UrlResolvable, returnType:T, body?:BodyResolvable):ReturnTypes[T];
     method = urlOrMethod.toUpperCase() as HttpMethods;
-    url = isString(returnTypeOrUrl) ? new URL(returnTypeOrUrl) : returnTypeOrUrl;
+    url = isString(returnTypeOrUrl) ? new urlAlias(returnTypeOrUrl) : returnTypeOrUrl;
     returnType = optionsOrReturnType as T;
     overrideOptions = bodyOrOptions as TypedOpts<U>|Opts || {};
     body = rawBody || overrideOptions.body || null;
@@ -373,16 +359,17 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   const executeRequest = (requestUrl:URL) => {
     // delete credentials to prevent from leaking credentials
     if(redirectCount > 0 && originalUrl.host !== requestUrl.host){
-      delete options.headers["cookie"];
-      delete options.headers["authorization"];
+      delete options.headers["Cookie"];
+      delete options.headers["Authorization"];
     }
+    // handle redirect if redirected, return true, otherwise false.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const redirect = (statusCode:number, location:string|undefined|null, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
       if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
         const redirectTo = location;
         if(redirectTo){
           redirectCount++;
-          setImmediate(() => resolve(executeRequest(new URL(redirectTo, requestUrl))));
+          setImmediate(() => resolve(executeRequest(new urlAlias(redirectTo, requestUrl))));
         }else{
           reject(genError("no location header found"));
         }
@@ -390,6 +377,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       }
       return false;
     };
+    // handle the response body as stream and resolve as raw stream, or as json, string, and so on.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const resolveStream = (resources:destroyable[], partialResult:Omit<CGResult<T>, "body">, stream:ReadableType, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
       let bufs:Buffer[]|null = [];
@@ -420,6 +408,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         .on("error", reject)
       ;
     };
+    // resolve body into sendable form
     const resolveBody = () => {
       return !body
       ? undefined
@@ -445,7 +434,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           abortController.abort();
         }, options.timeout);
         new promiseAlias<string|Buffer|undefined>((_resolve, _reject) => {
-          if(body instanceof Stream){
+          if(isObjectType(body, Stream)){
             const buf:Buffer[] = [];
             body
               .on("data", chunk => buf.push(chunk))
@@ -455,15 +444,16 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           }else{
             _resolve(resolveBody());
           }
-        }).then(fineBody => {
-          fetch(requestUrl.href, {
+        })
+          .then(fineBody => fetch(requestUrl.href, {
             method: method,
             headers: options.headers,
             agent: options.agent,
             redirect: "manual",
             signal: abortController.signal,
             body: fineBody,
-          } as RequestInit).then(async res => {
+          } as RequestInit))
+          .then(async res => {
             clearTimeout(timeout);
             if(redirect(res.status, res.headers.get("location"), resolve, reject)){
               res.arrayBuffer().catch(noop);
@@ -514,15 +504,16 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             }else{
               resolveStream([], partialResult, stream, resolve, reject);
             }
-          }).catch(er => {
+          })
+          .catch(er => {
             // TODO: implement better way to judge the aborted error or not
             if(er.message?.includes("abort")){
               reject(genError(TIMED_OUT));
             }else{
               reject(er);
             }
-          });
-        }).catch(reject); 
+          })
+        ;
         return;
       }
       const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {
@@ -538,7 +529,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           return;
         }
         // normalize the location header
-        if(res.headers.location) res.headers.location = new URL(res.headers.location, requestUrl.href).href;
+        if(res.headers.location) res.headers.location = new urlAlias(res.headers.location, requestUrl.href).href;
         const partialResult = {
           headers: res.headers,
           statusCode,
