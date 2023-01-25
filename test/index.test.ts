@@ -858,7 +858,7 @@ describe("CandyGet Tests", function(){
       Object.assign(candyget.defaultOptions, originalDefaultOptions);
     });
 
-    describe("#Custom Headers", function(){
+    describe("#Custom headers", function(){
       it("Status Code is ok", async function(){
         candyget.defaultOptions.headers = Object.assign(candyget.defaultOptions.headers || {}, {
           "x-requested-with": "XmlHttpRequest",
@@ -868,6 +868,49 @@ describe("CandyGet Tests", function(){
           reqheaders: {
             "x-requested-with": "XmlHttpRequest",
             "x-for-test": "1",
+          }
+        })
+          .get("/get")
+          .reply(200);
+        const result = await candyget(nockUrl("/get"), "json");
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#Overriden custom headers", function(){
+      it("Status Code is ok", async function(){
+        candyget.defaultOptions.headers = Object.assign(candyget.defaultOptions.headers || {}, {
+          "x-requested-with": "NoXmlHttpRequest",
+          "X-for-test": "-1",
+        });
+        const scope = nock(nockUrl(), {
+          reqheaders: {
+            "x-requested-with": "XmlHttpRequest",
+            "x-for-test": "1",
+            "accept": "*/*",
+          }
+        })
+          .get("/get")
+          .reply(200);
+        const result = await candyget(nockUrl("/get"), "json", {
+          headers: {
+            "x-requested-with": "XmlHttpRequest",
+            "X-for-test": "1",
+            "Accept": "*/*",
+          }
+        });
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
+    describe("#No default custom headers", function(){
+      it("Status Code is ok", async function(){
+        delete candyget.defaultOptions.headers;
+        const scope = nock(nockUrl(), {
+          reqheaders: {
+            "accept-language": "*",
           }
         })
           .get("/get")
