@@ -23,8 +23,9 @@
   - [Shorthand functions](#shorthand-functions)
     - [By return types](#by-return-types)
     - [By HTTP methods](#by-http-methods)
-- [Response body validation (for TypeScript users)](#response-body-validation-for-typescript-users)
 - [For TypeScript users](#for-typescript-users)
+  - [Response body validation](#response-body-validation)
+  - [Note](#note)
 - [License](#license)
 
 ## Features
