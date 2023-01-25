@@ -75,7 +75,7 @@ When no method provided, candyget will automatically infer the method type; if b
   * `"stream"` - `body` will be a `Readable`.
   * `"json"` - `body` will be a parsed object. If failed to parse, `body` will be a `string`.
   * `"empty"` - Only make a request. `body` will be `null`. You cannot handle the response (since v0.4.0).
-* `options` is an object that can have the following properties:
+* `options` is an object that can have the following properties. All these properties are optional in most cases. Passing `null` or `undefined` as `options` equals passing `{}`.
   |Option|Default|Description|
   |------|-------|-----------|
   |`timeout`|`10000`|Number to pass to `http.request`, represents the timeout in milliseconds.|
@@ -96,10 +96,6 @@ When no method provided, candyget will automatically infer the method type; if b
       }
     });
     ```
-
-  
-  > All these properties are optional in most cases.  
-  > Passing `null` or `undefined` as `options` equals passing `{}`.  
 * `body` can be a `string`, `Buffer`, `Stream` or a plain object (with no cyclic reference). If `options.body` and `body` are passed at the same time, `body` will be used as a request body.
 
 `candyget` returns a promise.
