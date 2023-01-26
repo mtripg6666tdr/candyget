@@ -27,6 +27,9 @@ const server = http.createServer((req, res) => {
       }));
     });
     return;
+  }else if(req.url === "/patch" && req.method === "PATCH"){
+    res.writeHead(204);
+    res.end();
   }else if(req.url === "/absolute-redirect/0"){
     res.writeHead(302, {
       "Location": "/get"
