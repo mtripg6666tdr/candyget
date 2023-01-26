@@ -1170,7 +1170,21 @@ describe("CandyGet Tests", function(){
     }
 
     testFetch("Default");
-    testFetch("node-fetch", nodeFetch); 
+    testFetch("node-fetch", nodeFetch);
+    testFetch("node-fetch, but body is null when HEAD", new Proxy(nodeFetch, {
+      apply(target, thisArg, argArray) {
+        const promise = Reflect.apply(target, thisArg, argArray) as ReturnType<typeof nodeFetch>;
+        if(argArray[0]?.method?.toLowerCase() === "head"){
+          return promise.then(res => {
+            // @ts-expect-error 2322
+            res.body = null;
+            return res;
+          });
+        }else{
+          return promise;
+        }
+      },
+    }))
     testFetch("undici", undici.fetch);
     testFetch("Default without fromWeb", undefined, true);
 
