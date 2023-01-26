@@ -502,15 +502,15 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             }else{
               setImmediate(async () => {
                 const reader = (res.body! as ReadableStream<Uint8Array>).getReader();
-                  let done = false;
-                  while(!done){
-                    const chunk = await reader.read();
-                    done = chunk.done;
-                    if(chunk.value){
-                      stream.write(chunk.value);
-                    }
+                let done = false;
+                while(!done){
+                  const chunk = await reader.read().catch(() => ({done: true, value: undefined}));
+                  done = chunk.done;
+                  if(chunk.value){
+                    stream.write(chunk.value);
                   }
-                  stream.end();
+                }
+                stream.end();
               });
             }
             if(returnType == "stream"){
