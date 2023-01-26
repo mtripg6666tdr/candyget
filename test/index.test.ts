@@ -1175,11 +1175,11 @@ describe("CandyGet Tests", function(){
       apply(target, thisArg, argArray) {
         const promise = Reflect.apply(target, thisArg, argArray) as ReturnType<typeof nodeFetch>;
         if(argArray[1]?.method?.toLowerCase() === "head"){
-          return promise.then(res => {
-            // @ts-expect-error 2322
-            res.body = null;
-            return res;
-          });
+          return promise.then(res => new Proxy(res, {
+            get(target, p, receiver) {
+              return p === "body" ? null : Reflect.get(target, p, receiver);
+            },
+          }));
         }else{
           return promise;
         }
