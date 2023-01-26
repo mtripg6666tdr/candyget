@@ -1163,6 +1163,14 @@ describe("CandyGet Tests", function(){
           });
         });
 
+        describe("#Patch (No content)", function(){
+          it("request is fine", async function(){
+            const result = await candyget.patch("http://localhost:8891/patch", "json", {}, "some patch content");
+            assert.equal(result.statusCode, 204);
+            assert.strictEqual(result.body, "");
+          });
+        });
+
         describe("#Redirect", function(){
           it("response is 302", async function(){
             const result = await candyget.empty("http://localhost:8891/absolute-redirect/10", {
@@ -1200,11 +1208,21 @@ describe("CandyGet Tests", function(){
     }
 
     testFetch("Default");
-    testFetch("node-fetch", nodeFetch); 
+    testFetch("node-fetch", nodeFetch);
+    testFetch("node-fetch, but body is null when HEAD", new Proxy(nodeFetch, {
+      apply(target, thisArg, argArray) {
+        const promise = Reflect.apply(target, thisArg, argArray) as ReturnType<typeof nodeFetch>;
+        return promise.then(res => new Proxy(res, {
+          get(target, p, receiver) {
+            return (argArray[1]?.method?.toLowerCase() === "head" || res.status == 204) && p === "body" ? null : Reflect.get(target, p, receiver);
+          },
+        }));
+      },
+    }))
     testFetch("undici", undici.fetch);
     testFetch("Default without fromWeb", undefined, true);
 
-    describe("#Invalid fetch impelementation", function(){
+    describe("#Invalid fetch implementation", function(){
       it("fetch throws an error", async function(){
         await assert.rejects(candyget("http://localhost:8891/get", "json", {
           fetch: {
