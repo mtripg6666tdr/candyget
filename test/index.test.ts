@@ -49,6 +49,7 @@ describe("CandyGet Tests", function(){
       console.log(".");
       await new Promise(resolve => setTimeout(resolve, 500 * i));
       success = await nodeFetch("http://localhost:8891/hello").then(res => res.ok);
+      if(success) break;
     }
     if(!success) throw new Error("Mock server has not been ready in time");
     console.log("Mock server ready");
@@ -606,6 +607,35 @@ describe("CandyGet Tests", function(){
           .get("/ok")
           .reply(200);
         const result = await candyget("https://example-redir0.com/redirect-to-other-domain", "string");
+        scope.done();
+        assert.equal(result.url.host, "example-redir2.com");
+      });
+
+      it("Handle correctly in a different host on POST method", async function(){
+        const scope = nock(/^https:\/\/example-redir.\.com/)
+          .post("/redirect-to-other-domain", "some content", {
+            reqheaders:  {
+              "Host": "example-redir0.com",
+              "Content-Type": "application/x-some-content",
+              "Content-Length": Buffer.byteLength("some content").toString(),
+            }
+          })
+          .reply(302, undefined, {
+            "Location": "https://example-redir2.com/ok"
+          })
+          .get("/ok", undefined, {
+            reqheaders: {
+              "Host": "example-redir2.com",
+            },
+            badheaders: ["Content-Type", "Content-Length"]
+          })
+          .reply(200);
+        const result = await candyget("https://example-redir0.com/redirect-to-other-domain", "string", {
+          headers: {
+            "Host": "example-redir0.com",
+            "Content-Type": "application/x-some-content"
+          }
+        }, "some content");
         scope.done();
         assert.equal(result.url.host, "example-redir2.com");
       });

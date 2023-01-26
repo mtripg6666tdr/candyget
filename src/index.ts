@@ -363,10 +363,21 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   // store the original url
   const originalUrl = url;
   const executeRequest = (requestUrl:URL) => {
-    // delete credentials to prevent from leaking credentials
-    if(redirectCount > 0 && originalUrl.host !== requestUrl.host){
-      delete options.headers["Cookie"];
-      delete options.headers["Authorization"];
+    if(redirectCount > 0){
+      if(originalUrl.host !== requestUrl.host){
+        // delete credentials to prevent from leaking credentials
+        delete options.headers["Cookie"];
+        delete options.headers["Authorization"];
+      }
+      // delete host header if present
+      delete options.headers["Host"];
+      // change http method to get
+      if(method == "POST"){
+        method = "GET";
+        body = null;
+        delete options.headers["Content-Type"];
+        delete options.headers["Content-Length"];
+      }
     }
     // handle redirect if redirected, return true, otherwise false.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
