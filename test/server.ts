@@ -2,9 +2,14 @@ import http from "http";
 
 const server = http.createServer((req, res) => {
   if(req.url === "/shutdown"){
-    server.close();
+    console.log("Shutdown test mock server...");
+    server.close(() => {
+      console.log("Test mock server shutdown completed");
+      process.exit(0);
+    });
     res.end("OK");
   }else if(req.url === "/hello"){
+    console.log("Triggered Server Hello");
     res.end("hello");
   } if(req.url === "/get" && req.method === "GET"){
     res.writeHead(200, {"Content-Type": "application/json"});
@@ -51,4 +56,6 @@ const server = http.createServer((req, res) => {
   }
   res.writeHead(400);
   res.end();
-}).listen(8891);
+}).listen(8891).once("listening", () => {
+  console.log("Test mock server started listening");
+});
