@@ -133,7 +133,7 @@ type destroyable = {destroyed?:boolean, destroy:()=>void};
 const destroy = (...destroyable:destroyable[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
-const normalizeKey = (key:string) => key.split("-").map(e => [e[0].toUpperCase(), e.slice(1).toLowerCase()].join("")).join("-");
+const normalizeKey = (key:string) => key.split("-").map(e => e[0].toUpperCase() + e.slice(1).toLowerCase()).join("-");
 
 /**
  * Represents candyget's result type.
@@ -364,7 +364,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   const originalUrl = url;
   const executeRequest = (requestUrl:URL) => {
     if(redirectCount > 0){
-      if(originalUrl.host !== requestUrl.host){
+      if(originalUrl.host !== requestUrl.host || originalUrl.protocol !== requestUrl.protocol){
         // delete credentials to prevent from leaking credentials
         delete options.headers["Cookie"];
         delete options.headers["Authorization"];
