@@ -1,6 +1,6 @@
 {
   "name": "candyget",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A tiny, candy sized HTTP(S) client for Node.js",
   "main": "index.js",
   "types": "index.d.ts",
@@ -15,13 +15,12 @@
   "keywords": [
     "http",
     "https",
-    "web",
     "request",
     "client",
-    "http.get",
     "redirects",
     "gzip",
     "br",
+    "deflate",
     "fetch",
     "stream"
   ],
