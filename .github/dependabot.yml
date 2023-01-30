@@ -13,3 +13,6 @@ updates:
       - "dependencies"
     allow:
       - dependency-type: "direct"
+    ignore:
+      - dependency-name: "node-fetch"
+        update-types: ["version-update:semver-major"]
