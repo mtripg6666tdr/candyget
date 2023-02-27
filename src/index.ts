@@ -562,15 +562,23 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }
-        const pipelineFragment:ReadableType[] = [res];
-        const contentEncoding = res.headers["content-encoding"]?.toLowerCase();
-        if(contentEncoding == "gzip"){
-          pipelineFragment.push(zlib.createGunzip());
-        }else if(contentEncoding == "br"){
-          pipelineFragment.push(zlib.createBrotliDecompress());
-        }else if(contentEncoding == "deflate"){
-          pipelineFragment.push(zlib.createInflate());
-        }
+        const pipelineFragment:ReadableType[] = [];
+        const contentEncodings = (res.headers["content-encoding"]?.toLowerCase().split(",") || []).map(e => e.trim());
+        contentEncodings.map(contentEncoding => {
+          if(contentEncoding == "gzip"){
+            pipelineFragment.push(zlib.createGunzip());
+          }else if(contentEncoding == "br"){
+            pipelineFragment.push(zlib.createBrotliDecompress());
+          }else if(contentEncoding == "deflate"){
+            pipelineFragment.push(zlib.createInflate());
+          }else if(contentEncoding == "identity"){
+            /* empty */
+          }else{
+            console.warn("Detected not supported content-encoding");
+          }
+        });
+        pipelineFragment.push(res);
+        pipelineFragment.reverse();
         if(returnType == "stream"){
           const stream = new PassThrough(options.transformerOptions);
           stream.once("close", () => {

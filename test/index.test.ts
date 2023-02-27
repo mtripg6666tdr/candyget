@@ -488,6 +488,38 @@ describe("CandyGet Tests", function(){
         assert.equal(sha256Checksum(result.body).toString("hex").toUpperCase(), JQUERY_HASH);
       });
     });
+
+    describe("#gzip identity", function(){
+      it("correct body", async function(){
+        const scope = nock(nockUrl())
+          .get("/gzip")
+          .reply(200, () => fs.createReadStream(path.join(__dirname, "./jquery.min.js")).pipe(zlib.createGzip()), {
+            "Content-Encoding": "gzip, identity",
+          });
+        const result = await candyget(nockUrl("/gzip"), "string");
+        scope.done();
+        assert.equal(sha256Checksum(result.body).toString("hex").toUpperCase(), JQUERY_HASH);
+      });
+    });
+
+    describe("#deflate gzip", function(){
+      it("correct body", async function(){
+        const scope = nock(nockUrl())
+          .get("/deflate-gzip")
+          .reply(
+            200,
+            () => fs.createReadStream(path.join(__dirname, "./jquery.min.js"))
+              .pipe(zlib.createDeflate())
+              .pipe(zlib.createGzip()),
+            {
+              "Content-Encoding": "deflate, gzip",
+            }
+          );
+        const result = await candyget(nockUrl("/deflate-gzip"), "string");
+        scope.done();
+        assert.equal(sha256Checksum(result.body).toString("hex").toUpperCase(), JQUERY_HASH);
+      });
+    });
   });
 
   describe("#Sending Default Headers", function(){
