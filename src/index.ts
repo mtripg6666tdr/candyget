@@ -15,6 +15,8 @@ const http = requireLocal("http") as typeof import("http");
 const https = requireLocal("https") as typeof import("https");
 const { PassThrough, pipeline, Readable, Stream } = requireLocal("stream") as typeof import("stream");
 const zlib = requireLocal("zlib") as typeof import("zlib");
+const globalFetch = (typeof fetch == "function" && fetch);
+const globalAbortController = (typeof AbortController == "function" && AbortController);
 
 /**
  * Represents options of candyget
@@ -107,9 +109,6 @@ const HttpLibs = {
 const redirectStatuses:Readonly<number[]> = [301, 302, 303, 307, 308];
 const CONTENT_TYPE = "Content-Type";
 const TIMED_OUT = "timed out";
-const LOCATION = "location";
-const FETCH = "fetch";
-const ABORT_CONTROLLER = "AbortController";
 const objectAlias = Object;
 const bufferAlias = Buffer;
 const promiseAlias = Promise;
@@ -315,7 +314,6 @@ function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, return
 // implementation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, returnTypeOrUrl:T|Url, optionsOrReturnType?:TypedOpts<U>|Opts|null|T, bodyOrOptions?:any|TypedOpts<U>|Opts|null, rawBody?:any):Promise<CGResult<T>>{
-  // parse arguments.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method:HttpMethods, url:URL, returnType:T, overrideOptions:Opts|TypedOpts<U>, body:any|null;
   try{
@@ -337,50 +335,34 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
     overrideOptions = bodyOrOptions as TypedOpts<U>|Opts || {};
     body = rawBody || overrideOptions.body || null;
   }
-
-
   // validate params (not strictly)
   if(!HttpMethodsSet.includes(method)) return genRejectedPromise(genInvalidParamMessage("method"));
   if(!BodyTypesSet.includes(returnType)) return genRejectedPromise(genInvalidParamMessage("returnType"));
   if(!isObject(overrideOptions)) return genRejectedPromise(genInvalidParamMessage("options"));
   if(!isObjectType(url, URL) || (url.protocol != "http:" && url.protocol != "https:")) return genRejectedPromise(genInvalidParamMessage("url"));
-
-
-  // prepare option
+  // prepare optiosn
   const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
   // normalize headers in defaultOptions
   const defaultOptionsHeaders:{[key:string]:string} = createEmpty();
   if(!(candyget as CGExport).defaultOptions.headers) (candyget as CGExport).defaultOptions.headers = {};
   objectAlias.keys((candyget as CGExport).defaultOptions.headers!).map(key => defaultOptionsHeaders[normalizeKey(key)] = (candyget as CGExport).defaultOptions.headers![key]);
-
-
   // normalize headers in override options
   const overrideOptionsHeaders:{[key:string]:string} = createEmpty();
   if(!overrideOptions.headers) overrideOptions.headers = {};
   objectAlias.keys(overrideOptions.headers).map(key => overrideOptionsHeaders[normalizeKey(key)] = overrideOptions.headers![key]);
   // merge headers
   options.headers = objectAlias.assign(defaultOptionsHeaders, overrideOptionsHeaders);
-
-
   // if json was passed and content-type is not set, set automatically
   if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
     options.headers[CONTENT_TYPE] = "application/json";
   }
-
-
-  // validate options
   if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
   if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
-
-
+  // execute request
   let redirectCount = 0;
   // store the original url
   const originalUrl = url;
-  
-
-  // define request executor
   const executeRequest = (requestUrl:URL) => {
-    // do jobs if the request was fired by redirection
     if(redirectCount > 0){
       if(originalUrl.host !== requestUrl.host || originalUrl.protocol !== requestUrl.protocol){
         // delete credentials to prevent from leaking credentials
@@ -397,8 +379,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         delete options.headers["Content-Length"];
       }
     }
-
-
     // handle redirect if redirected, return true, otherwise false.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const redirect = (statusCode:number, location:string|undefined|null, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
@@ -414,8 +394,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       }
       return false;
     };
-
-
     // handle the response body as stream and resolve as raw stream, or as json, string, and so on.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const resolveStream = (resources:destroyable[], partialResult:Omit<CGResult<T>, "body">, stream:ReadableType, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
@@ -447,8 +425,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         .on("error", reject)
       ;
     };
-
-
     // resolve body into sendable form
     const resolveBody = () => {
       return !body
@@ -457,39 +433,33 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       ? body
       : jsonAlias.stringify(body);
     };
-
-
     return new promiseAlias<CGResult<T>>((resolve, reject) => {
-      // prepare fetch implementation
       const [ fetch, AbortController ] = (() => {
-        if(options[FETCH]){
-          if(isObject(options[FETCH])){
-            return [options[FETCH][FETCH], options[FETCH][ABORT_CONTROLLER]];
+        if(options.fetch){
+          if(isObject(options.fetch)){
+            return [options.fetch.fetch, options.fetch.AbortController];
           }else{
-            return [global[FETCH], global[ABORT_CONTROLLER]];
+            return [globalFetch, globalAbortController];
           }
         }else{
           return [];
         }
-      })() as [(typeof global)["fetch"]|undefined, (typeof global)["AbortController"]|undefined];
-
-
-      // if fetch api is ready, use them instead of 
+      })() as [(typeof globalFetch)|null, (typeof globalAbortController)|null];
       if(fetch && AbortController){
         const abortController = new AbortController();
         const timeout = setTimeout(() => {
           abortController.abort();
         }, options.timeout);
-        new promiseAlias<string|Buffer|undefined>((childResolve, childReject) => {
+        new promiseAlias<string|Buffer|undefined>((_resolve, _reject) => {
           if(isObjectType(body, Stream)){
             const buf:Buffer[] = [];
             body
               .on("data", chunk => buf.push(chunk))
-              .on("end", () => childResolve(buf.every(e => isString(e)) ? buf.join("") : bufferAlias.concat(buf)))
-              .on("error", childReject)
+              .on("end", () => _resolve(buf.every(e => isString(e)) ? buf.join("") : bufferAlias.concat(buf)))
+              .on("error", _reject)
             ;
           }else{
-            childResolve(resolveBody());
+            _resolve(resolveBody());
           }
         })
           .then(fineBody => fetch(requestUrl.href, {
@@ -502,7 +472,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           } as RequestInit))
           .then(async res => {
             clearTimeout(timeout);
-            if(redirect(res.status, res.headers.get(LOCATION), resolve, reject)){
+            if(redirect(res.status, res.headers.get("location"), resolve, reject)){
               res.arrayBuffer().catch(noop);
               return;
             }
@@ -563,9 +533,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         ;
         return;
       }
-      
-
-      // fallback to the default requests by http/https module.
       const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {
         method: method,
         headers: options.headers,
@@ -573,17 +540,13 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         agent: options.agent,
       }, (res) => {
         const statusCode = res.statusCode!;
-
-
         // handle redirect
-        if(redirect(statusCode, res.headers[LOCATION], resolve, reject)){
+        if(redirect(statusCode, res.headers.location, resolve, reject)){
           destroy(req, res);
           return;
         }
-
-
         // normalize the location header
-        if(res.headers[LOCATION]) res.headers[LOCATION] = new urlAlias(res.headers[LOCATION], requestUrl.href).href;
+        if(res.headers.location) res.headers.location = new urlAlias(res.headers.location, requestUrl.href).href;
         const partialResult = {
           headers: res.headers,
           statusCode,
@@ -591,8 +554,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           response: res,
           url: requestUrl,
         };
-
-        // early return if the return type is empty
         if(returnType == "empty"){
           destroy(req, res);
           resolve({
@@ -601,8 +562,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }
-
-        // decompress based on the content-encoding header
         const pipelineFragment:ReadableType[] = [];
         const contentEncodings = (res.headers["content-encoding"]?.toLowerCase().split(",") || []).map(e => e.trim());
         contentEncodings.map(contentEncoding => {
@@ -620,8 +579,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         });
         pipelineFragment.push(res);
         pipelineFragment.reverse();
-
-
         if(returnType == "stream"){
           const stream = new PassThrough(options.transformerOptions);
           stream.once("close", () => {
@@ -642,8 +599,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         .on("error", reject)
         .on("timeout", () => reject(genError(TIMED_OUT)))
       ;
-
-      // consume the request body
       if(body && isObjectType(body, Stream)){
         body
           .on("error", (er) => {
@@ -656,8 +611,6 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       }
     });
   };
-
-  // execute request
   return executeRequest(url);
 }
 
