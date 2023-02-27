@@ -8,7 +8,6 @@ import candygetTS from "../src";
 import crypto from "crypto";
 import { Readable } from "stream";
 import nodeFetch from "node-fetch";
-import undici from "undici";
 import AbortController from "abort-controller";
 
 console.log("Test running on", process.versions.node);
@@ -1219,7 +1218,6 @@ describe("CandyGet Tests", function(){
         }));
       },
     }))
-    testFetch("undici", undici.fetch);
     testFetch("Default without fromWeb", undefined, true);
 
     describe("#Invalid fetch implementation", function(){
