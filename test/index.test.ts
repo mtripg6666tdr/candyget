@@ -534,7 +534,7 @@ describe("CandyGet Tests", function(){
           );
         const result = await candyget(nockUrl("/unknown"), "buffer");
         scope.done();
-        expect(result.body).to.equal(Buffer.from(Array.from({length: 7}, (_, i) => 36 * i)));
+        expect(result.body).to.deep.equal(Buffer.from(Array.from({length: 7}, (_, i) => 36 * i)));
       });
     });
   });
