@@ -134,7 +134,7 @@ type destroyable = {destroyed?:boolean, destroy:()=>void};
 const destroy = (...destroyable:destroyable[]) => destroyable.map(stream => {
   if(!stream.destroyed) stream.destroy();
 });
-const normalizeKey = (key:string) => key.split("-").map(e => e[0].toUpperCase() + e.slice(1).toLowerCase()).join("-");
+const normalizeKey = (key:string) => key.toLowerCase().startsWith("x-") ? key : key.split("-").map(e => e[0].toUpperCase() + e.slice(1).toLowerCase()).join("-");
 
 /**
  * Represents candyget's result type.
