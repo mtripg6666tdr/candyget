@@ -8,9 +8,11 @@ const server = http.createServer((req, res) => {
       process.exit(0);
     });
     res.end("OK");
+    return;
   }else if(req.url === "/hello"){
     console.log("Triggered Server Hello");
     res.end("hello");
+    return;
   } if(req.url === "/get" && req.method === "GET"){
     res.writeHead(200, {"Content-Type": "application/json"});
     res.end(JSON.stringify({
