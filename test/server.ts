@@ -23,6 +23,7 @@ const server = http.createServer((req, res) => {
   }else if(req.url === "/get" && req.method === "HEAD"){
     res.writeHead(200, {"Content-Type": "application/json"});
     res.end();
+    return;
   }else if(req.url === "/post" && req.method === "POST"){
     const buf:Buffer[] = [];
     req.on("data", chunk => buf.push(chunk));
@@ -37,6 +38,7 @@ const server = http.createServer((req, res) => {
   }else if(req.url === "/patch" && req.method === "PATCH"){
     res.writeHead(204);
     res.end();
+    return;
   }else if(req.url === "/absolute-redirect/0"){
     res.writeHead(302, {
       "Location": "/get"
@@ -58,9 +60,10 @@ const server = http.createServer((req, res) => {
       }
     }, 10 * 1000);
     return;
+  }else{
+    res.writeHead(400);
+    res.end();
   }
-  res.writeHead(400);
-  res.end();
 }).listen(8891).once("listening", () => {
   console.log("Test mock server started listening");
 });
