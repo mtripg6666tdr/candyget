@@ -3,9 +3,19 @@
   "compilerOptions": {
     "composite": true,
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": ".",
+    "tsBuildInfoFile": ".tsbuildinfo",
+
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "target": "ES5",
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "types": []
   },
   "include": [
     "./src/**/*.ts"
   ],
+  "exclude": [
+    "node_modules"
+  ]
 }
