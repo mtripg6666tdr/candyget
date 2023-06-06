@@ -1,4 +1,8 @@
-{
+// @ts-check
+const path = require("path");
+
+/** @type {import("eslint-define-config").ESLintConfig} */
+module.exports = {
   "root": true,
   "env": {
     "node": true,
@@ -8,6 +12,9 @@
     "eslint:recommended",
     "plugin:eslint-comments/recommended"
   ],
+  "parserOptions": {
+    "ecmaVersion": 2019
+  },
   "plugins": [
     "eslint-comments",
     "node"
@@ -58,15 +65,15 @@
       }
     },
     {
-      "files": "packages/candyget/**/*.ts",
+      "files": "./packages/candyget/**/*.ts",
       "parserOptions": {
-        "project": "packages/candyget/tsconfig.json"
+        "project": path.join(__dirname, "./packages/candyget/tsconfig.json"),
       }
     },
     {
-      "files": "packages/browser/**/*.ts",
+      "files": "./packages/browser/**/*.ts",
       "parserOptions": {
-        "project": "packages/browser/tsconfig.json"
+        "project": path.join(__dirname, "./packages/browser/tsconfig.json"),
       }
     }
   ]
