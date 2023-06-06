@@ -283,7 +283,8 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod: Url | HttpMethods, 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method: HttpMethods, url: URL, returnType: T, overrideOptions: Opts | TypedOpts<U>, body: any | null;
   try {
-    const objurl = new urlAlias(isString(urlOrMethod) ? urlOrMethod : urlOrMethod.href);
+    const urlStr = isString(urlOrMethod) ? urlOrMethod : urlOrMethod.href;
+    const objurl = new urlAlias(urlStr, HttpMethodsSet.includes(urlStr as HttpMethods) ? undefined : window.location.href);
     // (url:UrlResolvable, returnType:T, options?:Options, body?:BodyResolvable):ReturnTypes[T];
     url = objurl;
     returnType = returnTypeOrUrl as T;
