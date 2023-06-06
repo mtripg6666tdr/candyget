@@ -9,8 +9,14 @@
 
 ---
 
-Welcome to the monorepo, the home of candyget!
+Welcome to the home of candyget!
 
+This repository has multiple packages that have own separated releases.
+
+## Packages
 Here are the packages included in this repository.
 - [candyget](./packages/candyget/)
 - [@candyget/browser](./packages/browser/)
+
+## Licenses
+All packages and other files in the repository are licensed under [MIT](./LICENSE).
