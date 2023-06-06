@@ -42,8 +42,8 @@ jobs:
         with:
           name: build-out-files
           path: |
-            ./package/candyget/index.js
-            ./package/candyget/index.d.ts
+            ./packages/candyget/index.js
+            ./packages/candyget/index.d.ts
 
   test:
     runs-on: ubuntu-latest
