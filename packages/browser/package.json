@@ -1,20 +1,21 @@
 {
   "name": "@candyget/browser",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "cleanup": "rimraf dist tsconfig.tsbuildinfo"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mtripg6666tdr/candyget.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "mtripg6666tdr",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/mtripg6666tdr/candyget/issues"
   },

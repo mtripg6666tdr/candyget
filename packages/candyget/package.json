@@ -7,7 +7,8 @@
   "scripts": {
     "test": "mocha -- --require ts-node/register test/*.test.ts",
     "build": "swc src -d .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "cleanup": "rimraf index.js index.d.ts tsconfig.tsbuildinfo"
   },
   "keywords": [
     "http",
