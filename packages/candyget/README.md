@@ -11,9 +11,6 @@
 
 ---
 
-> **Warning**
-> This project is still in a development phase.
-
 - [Features](#features)
 - [Usage](#usage)
 - [API](#api)

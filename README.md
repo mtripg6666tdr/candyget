@@ -11,7 +11,8 @@
 
 ---
 
-> **Warning**
-> This project is still in a development phase.
-
 Welcome to the monorepo, the home of candyget!
+
+Here are the packages included in this repository.
+- [candyget](./packages/candyget/)
+- [@candyget/browser](./packages/browser/)
