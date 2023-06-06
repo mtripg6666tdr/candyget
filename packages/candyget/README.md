@@ -82,7 +82,7 @@ When no method provided, candyget will automatically infer the method type; if b
   |`maxRedirects`|`10`|`Number` that represents the redirect limit. If redirected more than the limit, candyget will return the HTTP redirect response as a resolved result.|
   |`body`||A `string`, `Buffer`, `Stream` or a plain object (with nocyclic reference). You can pass the request body instead of the last argument.|
   |`validator`||A `function` to validate if the response body has the expected type. See [below](#response-body-validation) for more info.|
-  |`fetch`|`false`|A `boolean` or an `object` including the fetch API implementation used by candyget. If it is set to `true` and in Node.js (^16.15.0 with `--experimental-fetch` or >=17.5.0), candyget will use [the native `fetch` API](https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch). This can also be set to your custom `fetch` API implementation like below. Both `fetch` and `AbortController` are required. It is not allowed to pass only one of them.|
+  |`fetch`|`true`|A `boolean` or an `object` including the fetch API implementation used by candyget. If it is set to `true` and in Node.js (^16.15.0 with `--experimental-fetch` or >=17.5.0), candyget will use [the native `fetch` API](https://nodejs.org/dist/latest-v18.x/docs/api/globals.html#fetch). This can also be set to your custom `fetch` API implementation like below. Both `fetch` and `AbortController` are required. It is not allowed to pass only one of them.|
     ```js
     const fetch = require("your-favorite-fetch-lib");
     const AbortController = require("your-favorite-abortController-polyfill");

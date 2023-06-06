@@ -56,6 +56,18 @@
         "@typescript-eslint/no-non-null-assertion": "off",
         "destructuring-import-spacing/destructuring-import-spacing": "warn"
       }
+    },
+    {
+      "files": "packages/candyget/**/*.ts",
+      "parserOptions": {
+        "project": "packages/candyget/tsconfig.json"
+      }
+    },
+    {
+      "files": "packages/browser/**/*.ts",
+      "parserOptions": {
+        "project": "packages/browser/tsconfig.json"
+      }
     }
   ]
 }

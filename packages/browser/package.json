@@ -2,7 +2,8 @@
   "name": "@candyget/browser",
   "version": "0.6.0-beta.0",
   "description": "",
-  "main": "index.js",
+  "exports": "./index.js",
+  "type": "module",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
