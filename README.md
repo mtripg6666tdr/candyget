@@ -19,4 +19,4 @@ Here are the packages included in this repository.
 - [@candyget/browser](./packages/browser/)
 
 ## Licenses
-All packages and other files in the repository are licensed under [MIT](./LICENSE).
+All packages and other files in the repository (except files that have an explicit description) are licensed under [MIT](./LICENSE).
