@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="../../assets/candyget_logo.svg" alt="CandyGet">
+  <img src="https://raw.githubusercontent.com/mtripg6666tdr/candyget/main/assets/candyget_logo.svg" alt="CandyGet">
   <br>
   <a href="https://www.npmjs.com/package/@candyget/browser"><img src="https://img.shields.io/npm/v/@candyget/browser" alt="npm"></a>
   <a href="https://packagephobia.com/result?p=%40candyget%2Fbrowser"><img src="https://badgen.net/packagephobia/install/@candyget/browser"></a>

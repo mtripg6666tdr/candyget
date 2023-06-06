@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="../../assets/candyget_logo.svg" alt="CandyGet">
+  <img src="https://raw.githubusercontent.com/mtripg6666tdr/candyget/main/assets/candyget_logo.svg" alt="CandyGet">
   <br>
   <p>A tiny, candy:candy: sized HTTP(S) client for Node.js</p>
   <a href="https://www.npmjs.com/package/candyget"><img src="https://img.shields.io/npm/v/candyget" alt="npm"></a>
