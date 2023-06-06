@@ -10,7 +10,8 @@
     "lint": "npm run lint --workspaces",
     "test": "run-p start:mock-server test:unit",
     "test:unit": "npm run test --workspaces",
-    "start:mock-server": "ts-node utils/server.ts"
+    "start:mock-server": "ts-node utils/server.ts",
+    "coverage": "nyc -r=html -r=text -r=lcov npm test"
   },
   "devDependencies": {
     "@swc/cli": "^0.1.59",
@@ -46,5 +47,11 @@
   "bugs": {
     "url": "https://github.com/mtripg6666tdr/candyget/issues"
   },
-  "homepage": "https://github.com/mtripg6666tdr/candyget#readme"
+  "homepage": "https://github.com/mtripg6666tdr/candyget#readme",
+  "nyc": {
+    "exclude": [
+      "utils/**",
+      "**/test/**"
+    ]
+  }
 }

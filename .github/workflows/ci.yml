@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build
         run: npm run build
 
@@ -59,11 +59,15 @@ jobs:
           - '20.x'
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+
+      - name: Setup npm
+        if: ${{ matrix.node-version == '12.x' || matrix.node-version == '14.x' }}
+        run: npm i -g npm@latest-7
 
       - name: Get npm cache directory
         id: npm-cache
@@ -88,14 +92,14 @@ jobs:
 
       - name: Test
         run: npm test
-  
+
   coverage:
     runs-on: ubuntu-latest
     needs:
       - build
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -135,7 +139,7 @@ jobs:
       - name: Check failure
         if: env.WORKFLOW_CONCLUSION != 'success'
         run: exit 1
-        
+
       - name: Success
         run: echo "All done"
         if: ${{ success() }}
