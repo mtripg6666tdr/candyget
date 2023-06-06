@@ -1,0 +1,35 @@
+{
+  "name": "candyget",
+  "version": "0.5.4",
+  "description": "A tiny, candy sized HTTP(S) client for Node.js",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "mocha -- --require ts-node/register test/*.test.ts",
+    "coverage": "nyc -r=html -r=text -r=lcov npm test",
+    "build": "swc src -d .&&tsc",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "http",
+    "https",
+    "request",
+    "client",
+    "redirects",
+    "gzip",
+    "br",
+    "deflate",
+    "fetch",
+    "stream"
+  ],
+  "author": "mtripg6666tdr",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mtripg6666tdr/candyget.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mtripg6666tdr/candyget/issues"
+  },
+  "homepage": "https://github.com/mtripg6666tdr/candyget#readme"
+}

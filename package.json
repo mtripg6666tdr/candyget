@@ -1,39 +1,17 @@
 {
-  "name": "candyget",
-  "version": "0.5.4",
-  "description": "A tiny, candy sized HTTP(S) client for Node.js",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "scripts": {
-    "test": "run-p test:serve test:unit",
-    "test:serve": "ts-node test/server.ts",
-    "test:unit": "mocha -- --require ts-node/register test/*.test.ts",
-    "coverage": "nyc -r=html -r=text -r=lcov npm test",
-    "build": "swc src -d .&&tsc",
-    "lint": "eslint ."
-  },
-  "keywords": [
-    "http",
-    "https",
-    "request",
-    "client",
-    "redirects",
-    "gzip",
-    "br",
-    "deflate",
-    "fetch",
-    "stream"
+  "name": "candyget-project",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
-  "author": "mtripg6666tdr",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mtripg6666tdr/candyget.git"
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "run-p start:mock-server test:unit",
+    "test:unit": "npm run test --workspaces",
+    "start:mock-server": "ts-node utils/server.ts"
   },
-  "bugs": {
-    "url": "https://github.com/mtripg6666tdr/candyget/issues"
-  },
-  "homepage": "https://github.com/mtripg6666tdr/candyget#readme",
   "devDependencies": {
     "@swc/cli": "^0.1.59",
     "@swc/core": "^1.3.27",
@@ -58,5 +36,15 @@
     "nyc": "^15.1.0",
     "ts-node": "^10.9.1",
     "typescript": "~5.0.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mtripg6666tdr/candyget.git"
+  },
+  "author": "mtripg6666tdr",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mtripg6666tdr/candyget/issues"
+  },
+  "homepage": "https://github.com/mtripg6666tdr/candyget#readme"
 }

@@ -563,7 +563,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         ;
         return;
       }
-      
+
 
       // fallback to the default requests by http/https module.
       const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {

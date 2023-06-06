@@ -1,0 +1,21 @@
+{
+  "name": "@candyget/browser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mtripg6666tdr/candyget.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mtripg6666tdr/candyget/issues"
+  },
+  "homepage": "https://github.com/mtripg6666tdr/candyget#readme"
+}

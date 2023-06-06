@@ -20,7 +20,7 @@
     "moduleResolution": "Node",
   },
   "include": [
-    "./src/**/*.ts"
+    "**/*.ts"
   ],
   "exclude": [
     "node_modules"
