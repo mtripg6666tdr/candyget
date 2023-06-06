@@ -13,3 +13,4 @@ coverage
 *.temp.*
 *.tmp.*
 assets
+!index.d.ts
