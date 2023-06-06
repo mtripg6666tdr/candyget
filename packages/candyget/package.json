@@ -6,7 +6,7 @@
   "types": "index.d.ts",
   "scripts": {
     "test": "mocha -- --require ts-node/register test/*.test.ts",
-    "build": "swc src -d .&&tsc",
+    "build": "swc src -d .",
     "lint": "eslint ."
   },
   "keywords": [

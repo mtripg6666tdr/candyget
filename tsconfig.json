@@ -1,28 +1,12 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "removeComments": true,
-    "noImplicitAny": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "allowJs": false,
-    "target": "ES2019",
-    "module": "CommonJS",
-    "emitDeclarationOnly": true,
-    "isolatedModules": false,
-    "declaration": true,
-    "outDir": ".",
-    "skipDefaultLibCheck": true,
-    "moduleResolution": "Node",
-  },
-  "include": [
-    "**/*.ts"
+  "extends": "./tsconfig.base.json",
+  "references": [
+    {
+      "path": "./packages/candyget/tsconfig.json"
+    },
+    {
+      "path": "./packages/browser/tsconfig.json"
+    }
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": []
 }
