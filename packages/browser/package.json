@@ -1,6 +1,6 @@
 {
   "name": "@candyget/browser",
-  "version": "0.6.0-beta.0",
+  "version": "0.6.0-beta.1",
   "description": "",
   "exports": "./index.js",
   "type": "module",

@@ -22,15 +22,6 @@ type Opts = {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any,
-  /**
-   * Prevent from using fetch API or passing custom fetch implementation
-   */
-  fetch?: boolean | {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    fetch: (url: string, init: any) => any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AbortController: new () => any,
-  },
 };
 
 /**
@@ -335,7 +326,6 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod: Url | HttpMethods, 
 
   // validate options
   if (typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
-  if (typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
 
   return new promiseAlias<CGResult<T>>((resolve, reject) => {
     const abortController = new AbortController();
@@ -435,17 +425,7 @@ BodyTypesSet.map(<T extends keyof BodyTypes>(type: T) => {
 
 const defaultOptions = {
   timeout: 10000,
-  headers: {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Accept-Language": "*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Candyget/0.0.0",
-  } as { [key: string]: string },
-  maxRedirects: 10,
-  transformerOptions: {
-    autoDestroy: true,
-  },
-  fetch: false,
+  headers: {} as { [key: string]: string },
 };
 
 (CandyGet as CGExport).defaultOptions = objectAlias.assign({}, defaultOptions);
