@@ -429,6 +429,6 @@ const defaultOptions = {
 };
 
 (CandyGet as CGExport).defaultOptions = objectAlias.assign({}, defaultOptions);
-
+CandyGet["default"] = CandyGet;
 const candyget = objectAlias.freeze(CandyGet) as CGExport;
-export default candyget;
+export = candyget;

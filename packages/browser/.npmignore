@@ -1,4 +1,5 @@
 src
-.swcrc
+*.swcrc
 tsconfig.json
-!index.js
+!cjs/*
+!esm/*

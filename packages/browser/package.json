@@ -1,13 +1,18 @@
 {
   "name": "@candyget/browser",
-  "version": "0.6.0-beta.1",
+  "version": "0.6.0-beta.3",
   "description": "",
-  "exports": "./index.js",
   "type": "module",
-  "devDependencies": {},
+  "exports": {
+    ".": {
+      "import": "./esm/index.js",
+      "require": "./cjs/index.js"
+    }
+  },
+  "main": "./cjs/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "swc src -d .",
+    "build:cjs": "swc src -d ./cjs/",
     "lint": "eslint .",
     "cleanup": "rimraf dist tsconfig.tsbuildinfo"
   },
