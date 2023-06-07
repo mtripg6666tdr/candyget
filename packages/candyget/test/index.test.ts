@@ -1,14 +1,17 @@
 import assert from "assert";
-import { expect } from "chai";
-import fs from "fs";
-import zlib from "zlib";
-import path from "path";
-import nock from "nock";
-import candygetTS from "../src";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { Readable } from "stream";
-import nodeFetch from "node-fetch";
+import zlib from "zlib";
+
 import AbortController from "abort-controller";
+import { expect } from "chai";
+import nock from "nock";
+import nodeFetch from "node-fetch";
+
+import candygetTS from "../src";
+
 
 console.log("Test running on", process.versions.node);
 
@@ -24,7 +27,7 @@ const candyget = (() => {
 // disable fetch api
 candyget.defaultOptions.fetch = false;
 
-function nockUrl(path:string = "", http:boolean = false){
+function nockUrl(path = "", http = false){
   return `http${http ? "" : "s"}://nocking-host.candyget${path}`;
 }
 
@@ -60,7 +63,7 @@ describe("CandyGet Tests", function(){
     nock.disableNetConnect();
   });
   this.afterEach(function(){
-    nock.cleanAll()
+    nock.cleanAll();
   });
   this.afterAll(() => new Promise(resolve => {
     nock.enableNetConnect();
@@ -185,7 +188,7 @@ describe("CandyGet Tests", function(){
           const result = await candyget("GET", nockUrl("/plain"), "string");
           scope.done();
           assert.equal(result.body, "foo bar");
-        })
+        });
       });
 
       describe("#Buffer", function(){
@@ -197,7 +200,7 @@ describe("CandyGet Tests", function(){
           const result = await candyget("GET", nockUrl("/buffer"), "buffer");
           scope.done();
           expect(result.body).to.deep.equal(Buffer.from(bufferData));
-        })
+        });
       });
 
       describe("#Stream", function(){
@@ -234,7 +237,7 @@ describe("CandyGet Tests", function(){
             status: "ok",
             num: 5
           });
-        })
+        });
       });
 
       describe("#Empty", function(){
@@ -286,7 +289,7 @@ describe("CandyGet Tests", function(){
         const result = await candyget.string(nockUrl("/plain"));
         scope.done();
         assert.equal(result.body, "foo bar");
-      })
+      });
     });
 
     describe("#Buffer", function(){
@@ -298,7 +301,7 @@ describe("CandyGet Tests", function(){
         const result = await candyget.buffer(nockUrl("/buffer"));
         scope.done();
         expect(result.body).to.deep.equal(Buffer.from(bufferData));
-      })
+      });
     });
 
     describe("#Stream", function(){
@@ -335,7 +338,7 @@ describe("CandyGet Tests", function(){
           status: "ok",
           num: 5
         });
-      })
+      });
     });
 
     describe("#Empty", function(){
@@ -703,7 +706,7 @@ describe("CandyGet Tests", function(){
           });
           scope.done();
           assert.equal(result.statusCode, 302);
-          assert.equal(result.headers.location, nockUrl("/redirect-to"))
+          assert.equal(result.headers.location, nockUrl("/redirect-to"));
           assert.equal(result.body, "redirected");
         });
       });
@@ -722,7 +725,7 @@ describe("CandyGet Tests", function(){
             .get("/path3")
             .reply(302, "redirected", {
               "Location": "/path4"
-            })
+            });
           const result = await candyget(nockUrl("/path1"), "string", {
             maxRedirects: 2
           });
@@ -764,7 +767,7 @@ describe("CandyGet Tests", function(){
             .reply(200, "ok");
           const result = await candyget(nockUrl("/post"), "string", {
             body: "some wrong content",
-          } as {}, "some big content");
+          } as any, "some big content");
           scope.done();
           assert.equal(result.statusCode, 200);
         });
@@ -786,7 +789,7 @@ describe("CandyGet Tests", function(){
           }));
         const result = await candyget<TestStruct>(nockUrl("/get"), "json", {
           validator(responseBody):responseBody is TestStruct {
-            return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+            return typeof responseBody.num === "number" && typeof responseBody.text === "string";
           },
         });
         scope.done();
@@ -803,7 +806,7 @@ describe("CandyGet Tests", function(){
           }));
         await assert.rejects(candyget<TestStruct>(nockUrl("/get"), "json", {
           validator(responseBody):responseBody is TestStruct {
-            return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+            return typeof responseBody.num === "number" && typeof responseBody.text === "string";
           },
         }), genErrorObject("invalid response body"));
         scope.done();
@@ -820,7 +823,7 @@ describe("CandyGet Tests", function(){
               }));
             const result = await candyget.json<TestStruct>(nockUrl("/get"), {
               validator(responseBody):responseBody is TestStruct {
-                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string";
               },
             });
             scope.done();
@@ -840,7 +843,7 @@ describe("CandyGet Tests", function(){
               }));
             const result = await candyget.get<TestStruct>(nockUrl("/get"), "json", {
               validator(responseBody):responseBody is TestStruct {
-                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string";
               },
             });
             scope.done();
@@ -860,7 +863,7 @@ describe("CandyGet Tests", function(){
               }));
             const result = await candyget.post<TestStruct>(nockUrl("/post"), "json", {
               validator(responseBody):responseBody is TestStruct {
-                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string";
               },
             }, "post content");
             scope.done();
@@ -880,7 +883,7 @@ describe("CandyGet Tests", function(){
               }));
             const result = await candyget.delete<TestStruct>(nockUrl("/delete"), "json", {
               validator(responseBody):responseBody is TestStruct {
-                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string";
               },
             }, "post content");
             scope.done();
@@ -900,7 +903,7 @@ describe("CandyGet Tests", function(){
               }));
             const result = await candyget.options<TestStruct>(nockUrl("/options"), "json", {
               validator(responseBody):responseBody is TestStruct {
-                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string";
               },
             });
             scope.done();
@@ -920,7 +923,7 @@ describe("CandyGet Tests", function(){
               }));
             const result = await candyget.patch<TestStruct>(nockUrl("/patch"), "json", {
               validator(responseBody):responseBody is TestStruct {
-                return typeof responseBody.num === "number" && typeof responseBody.text === "string"
+                return typeof responseBody.num === "number" && typeof responseBody.text === "string";
               },
             }, "patch content");
             scope.done();
@@ -1024,7 +1027,7 @@ describe("CandyGet Tests", function(){
           const result = await candyget(nockUrl("/redirect"), "string");
           scope.done();
           assert.equal(result.statusCode, 302);
-          assert.equal(result.headers.location, nockUrl("/redirect-to"))
+          assert.equal(result.headers.location, nockUrl("/redirect-to"));
           assert.equal(result.body, "redirected");
         });
       });
@@ -1077,14 +1080,14 @@ describe("CandyGet Tests", function(){
     describe("#Options", function(){
       it("Error", async function(){
         await assert.rejects(
-          candyget("https://example.com", "string", Symbol.for("invalid object") as unknown as {}),
+          candyget("https://example.com", "string", Symbol.for("invalid object") as any),
           genErrorObject("Invalid Param:options")
         );
       });
 
       it("Error (with method)", async function(){
         await assert.rejects(
-          candyget("GET", "https://example.com", "string", Symbol.for("invalid object") as unknown as {}),
+          candyget("GET", "https://example.com", "string", Symbol.for("invalid object") as any),
           genErrorObject("Invalid Param:options")
         );
       });
@@ -1165,7 +1168,7 @@ describe("CandyGet Tests", function(){
       Readable.fromWeb = fromWeb;
     });
 
-    function testFetch(tag:string, fetchImplement?:any, disableFromWeb:boolean = false){
+    function testFetch(tag:string, fetchImplement?:any, disableFromWeb = false){
       describe(tag, function(){
         this.timeout(10 * 1000);
         this.beforeAll(() => {
@@ -1175,7 +1178,7 @@ describe("CandyGet Tests", function(){
           } : true;
           if(disableFromWeb){
             // @ts-expect-error 2322
-            delete Readable.fromWeb
+            delete Readable.fromWeb;
           }
         });
         
@@ -1238,7 +1241,7 @@ describe("CandyGet Tests", function(){
             result.body.on("end", () => {
               const resp = JSON.parse(Buffer.concat(bufs).toString());
               assert.ok(resp.args);
-            })
+            });
           });
         });
 
@@ -1269,7 +1272,7 @@ describe("CandyGet Tests", function(){
           },
         }));
       },
-    }))
+    }));
     testFetch("Default without fromWeb", undefined, true);
 
     if(typeof fetch === "function"){

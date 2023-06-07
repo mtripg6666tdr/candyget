@@ -64,13 +64,13 @@ module.exports = {
       }
     },
     {
-      "files": "./packages/candyget/**/*.ts",
+      "files": "./packages/candyget/src/**/*.ts",
       "parserOptions": {
         "project": path.join(__dirname, "./packages/candyget/tsconfig.json"),
       }
     },
     {
-      "files": "./packages/browser/**/*.ts",
+      "files": "./packages/browser/src/**/*.ts",
       "parserOptions": {
         "project": path.join(__dirname, "./packages/browser/tsconfig.json"),
       }
