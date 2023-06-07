@@ -155,7 +155,7 @@ type CGTypedResult<U> = Omit<CGResult<"json">, "body"> & {
   body: U;
 };
 
-type CGExport = typeof candyget & {
+type CGExport = typeof CandyGet & {
   /**
    * Default options used in candyget, which can be overwritten by the argument of candyget
    */
@@ -296,25 +296,25 @@ type CGExport = typeof candyget & {
 
 // define possible overloads
 
-function candyget<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>;
+function CandyGet<U>(url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>;
+function CandyGet<U>(url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>;
 
-function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null):Promise<CGResult<T>>;
+function CandyGet<T extends keyof BodyTypes>(url:Url, returnType:T, options?:Opts|null):Promise<CGResult<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>;
+function CandyGet<T extends keyof BodyTypes>(url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>;
 
-function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>;
+function CandyGet<U>(method:HttpMethods, url:Url, returnType:"json", options:TypedOpts<U>):Promise<CGTypedResult<U>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<U>(method:HttpMethods, url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>;
+function CandyGet<U>(method:HttpMethods, url:Url, returnType:"json", options:OmitBody<TypedOpts<U>>, body?:any):Promise<CGTypedResult<U>>;
 
-function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:Opts):Promise<CGResult<T>>;
+function CandyGet<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:Opts):Promise<CGResult<T>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>;
+function CandyGet<T extends keyof BodyTypes>(method:HttpMethods, url:Url, returnType:T, options?:OmitBody<Opts>|null, body?:any):Promise<CGResult<T>>;
 
 // implementation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, returnTypeOrUrl:T|Url, optionsOrReturnType?:TypedOpts<U>|Opts|null|T, bodyOrOptions?:any|TypedOpts<U>|Opts|null, rawBody?:any):Promise<CGResult<T>>{
+function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, returnTypeOrUrl:T|Url, optionsOrReturnType?:TypedOpts<U>|Opts|null|T, bodyOrOptions?:any|TypedOpts<U>|Opts|null, rawBody?:any):Promise<CGResult<T>>{
   // parse arguments.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let method:HttpMethods, url:URL, returnType:T, overrideOptions:Opts|TypedOpts<U>, body:any|null;
@@ -347,11 +347,11 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
 
 
   // prepare option
-  const options = objectAlias.assign(createEmpty(), defaultOptions, (candyget as CGExport).defaultOptions, overrideOptions);
+  const options = objectAlias.assign(createEmpty(), defaultOptions, (CandyGet as CGExport).defaultOptions, overrideOptions);
   // normalize headers in defaultOptions
   const defaultOptionsHeaders:{[key:string]:string} = createEmpty();
-  if(!(candyget as CGExport).defaultOptions.headers) (candyget as CGExport).defaultOptions.headers = {};
-  objectAlias.keys((candyget as CGExport).defaultOptions.headers!).map(key => defaultOptionsHeaders[normalizeKey(key)] = (candyget as CGExport).defaultOptions.headers![key]);
+  if(!(CandyGet as CGExport).defaultOptions.headers) (CandyGet as CGExport).defaultOptions.headers = {};
+  objectAlias.keys((CandyGet as CGExport).defaultOptions.headers!).map(key => defaultOptionsHeaders[normalizeKey(key)] = (CandyGet as CGExport).defaultOptions.headers![key]);
 
 
   // normalize headers in override options
@@ -376,7 +376,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
   let redirectCount = 0;
   // store the original url
   const originalUrl = url;
-  
+
 
   // define request executor
   const executeRequest = (requestUrl:URL) => {
@@ -563,7 +563,7 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         ;
         return;
       }
-      
+
 
       // fallback to the default requests by http/https module.
       const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {
@@ -662,25 +662,24 @@ function candyget<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
 }
 
 // setup shorthand functions
-const candygetType = candyget as CGExport;
 BodyTypesSet.map(<T extends keyof BodyTypes>(type:T) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  candygetType[type] = <T extends keyof BodyTypes> (url:Url, options?:Opts, body?:any) => {
-      return candyget(url, type, options, body) as unknown as Promise<CGResult<T>>;
+  (CandyGet as CGExport)[type] = <T extends keyof BodyTypes> (url:Url, options?:Opts, body?:any) => {
+      return CandyGet(url, type, options, body) as unknown as Promise<CGResult<T>>;
   };
 });
-candygetType.get = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options?:TypedOpts<U>|Opts) => candyget(url, returnType, options);
-candygetType.head = (url:Url, options?:Opts) => candyget("HEAD", url, "empty", options);
+(CandyGet as CGExport).get = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options?:TypedOpts<U>|Opts) => CandyGet(url, returnType, options);
+(CandyGet as CGExport).head = (url:Url, options?:Opts) => CandyGet("HEAD", url, "empty", options);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-candygetType.post = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options:TypedOpts<U>|Opts, body?:any) => candyget("POST", url, returnType, options, body);
+(CandyGet as CGExport).post = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options:TypedOpts<U>|Opts, body?:any) => CandyGet("POST", url, returnType, options, body);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-candygetType.put = (url:Url, options:Opts, body?:any) => candyget("PUT", url, "empty", options, body);
+(CandyGet as CGExport).put = (url:Url, options:Opts, body?:any) => CandyGet("PUT", url, "empty", options, body);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-candygetType.delete = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options?:TypedOpts<U>|Opts, body?:any) => candyget("DELETE", url, returnType, options, body);
-candygetType.options = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options?:TypedOpts<U>|Opts) => candyget("OPTIONS", url, returnType, options);
-candygetType.trace = (url:Url, options?:Opts) => candyget("TRACE", url, "empty", options);
+(CandyGet as CGExport).delete = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options?:TypedOpts<U>|Opts, body?:any) => CandyGet("DELETE", url, returnType, options, body);
+(CandyGet as CGExport).options = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options?:TypedOpts<U>|Opts) => CandyGet("OPTIONS", url, returnType, options);
+(CandyGet as CGExport).trace = (url:Url, options?:Opts) => CandyGet("TRACE", url, "empty", options);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-candygetType.patch = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options:TypedOpts<U>|Opts, body?:any) => candyget("PATCH", url, returnType, options, body);
+(CandyGet as CGExport).patch = <T extends keyof BodyTypes, U>(url:Url, returnType:T, options:TypedOpts<U>|Opts, body?:any) => CandyGet("PATCH", url, returnType, options, body);
 
 const defaultOptions = {
   timeout: 10000,
@@ -694,9 +693,10 @@ const defaultOptions = {
   transformerOptions: {
     autoDestroy: true,
   },
-  fetch: false,
+  fetch: true,
 };
 
-candygetType.defaultOptions = objectAlias.assign({}, defaultOptions);
+(CandyGet as CGExport).defaultOptions = objectAlias.assign({}, defaultOptions);
 
-export = objectAlias.freeze(candyget) as CGExport;
+const candyget = objectAlias.freeze(CandyGet) as CGExport;
+export = candyget;

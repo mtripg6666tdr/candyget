@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "removeComments": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "allowJs": false,
+    "target": "ES2019",
+    "module": "CommonJS",
+    "emitDeclarationOnly": true,
+    "isolatedModules": false,
+    "declaration": true,
+    "skipDefaultLibCheck": true,
+    "moduleResolution": "Node"
+  }
+}

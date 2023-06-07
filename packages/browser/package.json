@@ -1,0 +1,30 @@
+{
+  "name": "@candyget/browser",
+  "version": "0.6.0-beta.3",
+  "description": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./esm/index.js",
+      "require": "./cjs/index.js"
+    }
+  },
+  "main": "./cjs/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\"",
+    "build:cjs": "swc src -d ./cjs/",
+    "lint": "eslint .",
+    "cleanup": "rimraf dist tsconfig.tsbuildinfo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mtripg6666tdr/candyget.git"
+  },
+  "keywords": [],
+  "author": "mtripg6666tdr",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mtripg6666tdr/candyget/issues"
+  },
+  "homepage": "https://github.com/mtripg6666tdr/candyget#readme"
+}

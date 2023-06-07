@@ -1,0 +1,6 @@
+src
+*.swcrc
+tsconfig.json
+!cjs/*
+!esm/*
+.eslintignore

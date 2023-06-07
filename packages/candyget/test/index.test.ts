@@ -21,6 +21,9 @@ const candyget = (() => {
   }
 })() as typeof candygetTS;
 
+// disable fetch api
+candyget.defaultOptions.fetch = false;
+
 function nockUrl(path:string = "", http:boolean = false){
   return `http${http ? "" : "s"}://nocking-host.candyget${path}`;
 }
@@ -1268,6 +1271,10 @@ describe("CandyGet Tests", function(){
       },
     }))
     testFetch("Default without fromWeb", undefined, true);
+
+    if(typeof fetch === "function"){
+      testFetch("Native Fetch", fetch);
+    }
 
     describe("#Invalid fetch implementation", function(){
       it("fetch throws an error", async function(){

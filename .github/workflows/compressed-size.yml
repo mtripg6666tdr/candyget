@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -20,7 +20,7 @@ jobs:
         id: npm-cache
         run: |
           echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
-          
+
       - name: Check npm cache
         uses: actions/cache@v3
         with:
@@ -31,5 +31,5 @@ jobs:
       
       - uses: preactjs/compressed-size-action@v2
         with:
-          pattern: "{index.{js,d.ts},package.json,LICENSE,README.md}"
+          pattern: "./packages/candyget/{index.{js,d.ts},package.json,LICENSE,README.md}"
           compression: none
