@@ -48,7 +48,7 @@ type Opts = {
     AbortController:new () => any,
   },
 
-  plugins: {
+  plugins?: {
     paramHook?:(d:any)=>any,
     resultHook?:(d:Promise<any>)=>Promise<any>,
   }[],
