@@ -61,7 +61,8 @@ module.exports = {
         "@typescript-eslint/semi": ["error", "always"],
         "@typescript-eslint/no-unnecessary-type-assertion": "warn",
         "@typescript-eslint/no-non-null-assertion": "off",
-        "named-import-spacing/named-import-spacing": "warn"
+        "named-import-spacing/named-import-spacing": "warn",
+        "@typescript-eslint/no-explicit-any": "off"
       }
     },
     {
