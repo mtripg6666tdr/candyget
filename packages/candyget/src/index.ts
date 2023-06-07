@@ -342,7 +342,7 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
     options.headers[CONTENT_TYPE] = "application/json";
   }
 
-  const plugins = [...options.plugins];
+  const plugins = options.plugins ? [...options.plugins] : [];
   plugins.forEach(plugin => {
     if(plugin.paramHook){
       const transformed = plugin.paramHook({method, url, returnType, options, body});
