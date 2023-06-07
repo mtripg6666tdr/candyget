@@ -54,14 +54,14 @@ module.exports = {
       },
       "plugins": [
         "@typescript-eslint",
-        "destructuring-import-spacing",
+        "named-import-spacing",
         "import"
       ],
       "rules": {
         "@typescript-eslint/semi": ["error", "always"],
         "@typescript-eslint/no-unnecessary-type-assertion": "warn",
         "@typescript-eslint/no-non-null-assertion": "off",
-        "destructuring-import-spacing/destructuring-import-spacing": "warn"
+        "named-import-spacing/named-import-spacing": "warn"
       }
     },
     {
