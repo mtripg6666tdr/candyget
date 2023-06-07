@@ -6,15 +6,13 @@ module.exports = {
   "root": true,
   "env": {
     "node": true,
-    "commonjs": true
+    "commonjs": true,
+    "es2019": true,
   },
   "extends": [
     "eslint:recommended",
     "plugin:eslint-comments/recommended"
   ],
-  "parserOptions": {
-    "ecmaVersion": 2019
-  },
   "plugins": [
     "eslint-comments",
     "node"
