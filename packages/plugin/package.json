@@ -2,8 +2,7 @@
   "name": "@candyget/plugin",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
-  "devDependencies": {},
+  "types": "index.d.ts",
   "scripts": {
     "test": ""
   },
@@ -12,8 +11,8 @@
     "url": "git+https://github.com/mtripg6666tdr/candyget.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "mtripg6666tdr",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/mtripg6666tdr/candyget/issues"
   },
