@@ -1,9 +1,8 @@
 {
   "name": "candyget",
-  "version": "0.6.0-beta.0",
+  "version": "0.5.5",
   "description": "A tiny, candy sized HTTP(S) client for Node.js",
   "main": "./index.js",
-  "browser": "./browser.js",
   "types": "index.d.ts",
   "scripts": {
     "test": "mocha -- --require ts-node/register test/*.test.ts",
@@ -32,13 +31,5 @@
   "bugs": {
     "url": "https://github.com/mtripg6666tdr/candyget/issues"
   },
-  "homepage": "https://github.com/mtripg6666tdr/candyget#readme",
-  "peerDependencies": {
-    "@candyget/browser": "*"
-  },
-  "peerDependenciesMeta": {
-    "@candyget/browser": {
-      "optional": true
-    }
-  }
+  "homepage": "https://github.com/mtripg6666tdr/candyget#readme"
 }
