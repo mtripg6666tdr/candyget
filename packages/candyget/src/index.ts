@@ -604,20 +604,22 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
 
         // decompress based on the content-encoding header
         const pipelineFragment:ReadableType[] = [];
-        const contentEncodings = (res.headers["content-encoding"]?.toLowerCase().split(",") || []).map(e => e.trim());
-        contentEncodings.map(contentEncoding => {
-          if(contentEncoding == "gzip"){
-            pipelineFragment.push(zlib.createGunzip());
-          }else if(contentEncoding == "br"){
-            pipelineFragment.push(zlib.createBrotliDecompress());
-          }else if(contentEncoding == "deflate"){
-            pipelineFragment.push(zlib.createInflate());
-          }else if(contentEncoding == "identity"){
-            /* empty */
-          }else{
-            console.warn("Detected not supported content-encoding");
-          }
-        });
+        if(method != "HEAD" && res.headers["content-length"] !== "0"){
+          const contentEncodings = (res.headers["content-encoding"]?.toLowerCase().split(",") || []).map(e => e.trim());
+          contentEncodings.map(contentEncoding => {
+            if(contentEncoding == "gzip"){
+              pipelineFragment.push(zlib.createGunzip());
+            }else if(contentEncoding == "br"){
+              pipelineFragment.push(zlib.createBrotliDecompress());
+            }else if(contentEncoding == "deflate"){
+              pipelineFragment.push(zlib.createInflate());
+            }else if(contentEncoding == "identity"){
+              /* empty */
+            }else{
+              console.warn("Detected not supported content-encoding");
+            }
+          });
+        }
         pipelineFragment.push(res);
         pipelineFragment.reverse();
 
