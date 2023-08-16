@@ -373,6 +373,19 @@ describe("CandyGet Tests", function(){
       });
     });
 
+    describe("#Head (empty but content-encoding)", function(){
+      it("status code is ok", async function(){
+        const scope = nock(nockUrl())
+          .head("/head")
+          .reply(200, "", {
+            "Content-Encoding": "gzip"
+          });
+        const result = await candyget.head(nockUrl("/head"));
+        scope.done();
+        assert.equal(result.statusCode, 200);
+      });
+    });
+
     describe("#Post", function(){
       it("status code is ok, body is fine", async function(){
         const scope = nock(nockUrl())
@@ -538,6 +551,20 @@ describe("CandyGet Tests", function(){
         scope.done();
         expect(result.body).to.deep.equal(Buffer.from(Array.from({length: 7}, (_, i) => 36 * i)));
       });
+    });
+
+    describe("#gzip but empty response body", function(){
+      it("correct status code", async function(){
+        const scope = nock(nockUrl())
+          .get("/empty")
+          .reply(200, "", {
+            "Content-Encoding": "gzip",
+            "Content-Length": "0",
+          });
+        const result = await candyget(nockUrl("/empty"), "string");
+        scope.done();
+        expect(result.statusCode).equal(200);
+      })
     });
   });
 
