@@ -8,7 +8,7 @@
 
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "target": "ES5",
-    "module": "NodeNext",
+    "module": "CommonJS",
     "moduleResolution": "NodeNext",
     "types": []
   },
