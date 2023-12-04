@@ -110,7 +110,10 @@ const TIMED_OUT = "timed out";
 const LOCATION = "location";
 const FETCH = "fetch";
 const ABORT_CONTROLLER = "AbortController";
+const HEADERS = "headers";
+const MAX_REDIRECTS = "maxRedirects";
 const objectAlias = Object;
+const objectAlias_assign = objectAlias.assign;
 const bufferAlias = Buffer;
 const promiseAlias = Promise;
 const urlAlias = URL;
@@ -347,30 +350,32 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
 
 
   // prepare option
-  const options = objectAlias.assign(createEmpty(), defaultOptions, (CandyGet as CGExport).defaultOptions, overrideOptions);
+  const options = objectAlias_assign(createEmpty(), defaultOptions, (CandyGet as CGExport).defaultOptions, overrideOptions);
   // normalize headers in defaultOptions
   const defaultOptionsHeaders:{[key:string]:string} = createEmpty();
-  if(!(CandyGet as CGExport).defaultOptions.headers) (CandyGet as CGExport).defaultOptions.headers = {};
-  objectAlias.keys((CandyGet as CGExport).defaultOptions.headers!).map(key => defaultOptionsHeaders[normalizeKey(key)] = (CandyGet as CGExport).defaultOptions.headers![key]);
+  if(!(CandyGet as CGExport).defaultOptions[HEADERS]) (CandyGet as CGExport).defaultOptions[HEADERS] = {};
+  objectAlias.keys((CandyGet as CGExport).defaultOptions[HEADERS]!).map(
+    key => defaultOptionsHeaders[normalizeKey(key)] = (CandyGet as CGExport).defaultOptions[HEADERS]![key]
+  );
 
 
   // normalize headers in override options
   const overrideOptionsHeaders:{[key:string]:string} = createEmpty();
-  if(!overrideOptions.headers) overrideOptions.headers = {};
-  objectAlias.keys(overrideOptions.headers).map(key => overrideOptionsHeaders[normalizeKey(key)] = overrideOptions.headers![key]);
+  if(!overrideOptions[HEADERS]) overrideOptions[HEADERS] = {};
+  objectAlias.keys(overrideOptions[HEADERS]).map(key => overrideOptionsHeaders[normalizeKey(key)] = overrideOptions.headers![key]);
   // merge headers
-  options.headers = objectAlias.assign(defaultOptionsHeaders, overrideOptionsHeaders);
+  options[HEADERS] = objectAlias_assign(defaultOptionsHeaders, overrideOptionsHeaders);
 
 
   // if json was passed and content-type is not set, set automatically
-  if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options.headers[CONTENT_TYPE]){
-    options.headers[CONTENT_TYPE] = "application/json";
+  if(body && !isString(body) && !isObjectType(body, bufferAlias) && !isObjectType(body, Stream) && !options[HEADERS][CONTENT_TYPE]){
+    options[HEADERS][CONTENT_TYPE] = "application/json";
   }
 
 
   // validate options
   if(typeof options.timeout != "number" || options.timeout < 1 || isNaN(options.timeout)) return genRejectedPromise(genInvalidParamMessage("timeout"));
-  if(typeof options.maxRedirects != "number" || options.maxRedirects < 0 || isNaN(options.maxRedirects)) return genRejectedPromise(genInvalidParamMessage("maxRedirects"));
+  if(typeof options[MAX_REDIRECTS] != "number" || options[MAX_REDIRECTS] < 0 || isNaN(options[MAX_REDIRECTS])) return genRejectedPromise(genInvalidParamMessage(MAX_REDIRECTS));
 
 
   let redirectCount = 0;
@@ -384,17 +389,17 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
     if(redirectCount > 0){
       if(originalUrl.host !== requestUrl.host || originalUrl.protocol !== requestUrl.protocol){
         // delete credentials to prevent from leaking credentials
-        delete options.headers["Cookie"];
-        delete options.headers["Authorization"];
+        delete options[HEADERS]["Cookie"];
+        delete options[HEADERS]["Authorization"];
       }
       // delete host header if present
-      delete options.headers["Host"];
+      delete options[HEADERS]["Host"];
       // change http method to get
       if(method == "POST"){
         method = "GET";
         body = null;
-        delete options.headers["Content-Type"];
-        delete options.headers["Content-Length"];
+        delete options[HEADERS]["Content-Type"];
+        delete options[HEADERS]["Content-Length"];
       }
     }
 
@@ -402,7 +407,7 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
     // handle redirect if redirected, return true, otherwise false.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const redirect = (statusCode:number, location:string|undefined|null, resolve:(value:CGResult<T>|PromiseLike<CGResult<T>>)=>void, reject:(reason:any)=>void) => {
-      if(redirectCount < options.maxRedirects && redirectStatuses.includes(statusCode)){
+      if(redirectCount < options[MAX_REDIRECTS] && redirectStatuses.includes(statusCode)){
         const redirectTo = location;
         if(redirectTo){
           redirectCount++;
@@ -494,7 +499,7 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
         })
           .then(fineBody => fetch(requestUrl.href, {
             method: method,
-            headers: options.headers,
+            [HEADERS]: options[HEADERS],
             agent: options.agent,
             redirect: "manual",
             signal: abortController.signal,
@@ -502,14 +507,14 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           } as RequestInit))
           .then(async res => {
             clearTimeout(timeout);
-            if(redirect(res.status, res.headers.get(LOCATION), resolve, reject)){
+            if(redirect(res.status, res[HEADERS].get(LOCATION), resolve, reject)){
               res.arrayBuffer().catch(noop);
               return;
             }
             const headers:{[key:string]:string} = createEmpty();
-            [...res.headers.keys()].map(key => headers[key.toLowerCase()] = res.headers.get(key)!);
+            [...res[HEADERS].keys()].map(key => headers[key.toLowerCase()] = res.headers.get(key)!);
             const partialResult = {
-              headers,
+              [HEADERS]: headers,
               statusCode: res.status,
               request: null,
               response: res,
@@ -568,7 +573,7 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
       // fallback to the default requests by http/https module.
       const req = HttpLibs[requestUrl.protocol as keyof typeof HttpLibs].request(requestUrl, {
         method: method,
-        headers: options.headers,
+        [HEADERS]: options[HEADERS],
         timeout: options.timeout,
         agent: options.agent,
       }, (res) => {
@@ -576,16 +581,16 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
 
 
         // handle redirect
-        if(redirect(statusCode, res.headers[LOCATION], resolve, reject)){
+        if(redirect(statusCode, res[HEADERS][LOCATION], resolve, reject)){
           destroy(req, res);
           return;
         }
 
 
         // normalize the location header
-        if(res.headers[LOCATION]) res.headers[LOCATION] = new urlAlias(res.headers[LOCATION], requestUrl.href).href;
+        if(res[HEADERS][LOCATION]) res[HEADERS][LOCATION] = new urlAlias(res[HEADERS][LOCATION], requestUrl.href).href;
         const partialResult = {
-          headers: res.headers,
+          [HEADERS]: res[HEADERS],
           statusCode,
           request: req,
           response: res,
@@ -604,8 +609,8 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
 
         // decompress based on the content-encoding header
         const pipelineFragment:ReadableType[] = [];
-        if(method != "HEAD" && res.headers["content-length"] !== "0"){
-          const contentEncodings = (res.headers["content-encoding"]?.toLowerCase().split(",") || []).map(e => e.trim());
+        if(method != "HEAD" && res[HEADERS]["content-length"] !== "0"){
+          const contentEncodings = (res[HEADERS]["content-encoding"]?.toLowerCase().split(",") || []).map(e => e.trim());
           contentEncodings.map(contentEncoding => {
             if(contentEncoding == "gzip"){
               pipelineFragment.push(zlib.createGunzip());
@@ -616,7 +621,7 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
             }else if(contentEncoding == "identity"){
               /* empty */
             }else{
-              console.warn("Detected not supported content-encoding");
+              console.warn("Detected unsupported content-encoding");
             }
           });
         }
@@ -637,7 +642,15 @@ function CandyGet<T extends keyof BodyTypes, U>(urlOrMethod:Url|HttpMethods, ret
           });
           return;
         }else{
-          resolveStream([req, res], partialResult, pipelineFragment.length == 1 ? pipelineFragment[0] : pipeline(pipelineFragment, noop) as unknown as ReadableType, resolve, reject);
+          resolveStream(
+            [req, res],
+            partialResult,
+            pipelineFragment.length == 1
+              ? pipelineFragment[0]
+              : pipeline(pipelineFragment, noop) as unknown as ReadableType,
+            resolve,
+            reject
+          );
           return;
         }
       })
@@ -685,20 +698,20 @@ BodyTypesSet.map(<T extends keyof BodyTypes>(type:T) => {
 
 const defaultOptions = {
   timeout: 10000,
-  headers: {
+  [HEADERS]: {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "Accept-Language": "*",
     "Accept-Encoding": "gzip, deflate, br",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Candyget/0.0.0",
   } as {[key:string]:string},
-  maxRedirects: 10,
+  [MAX_REDIRECTS]: 10,
   transformerOptions: {
     autoDestroy: true,
   },
   fetch: false,
 };
 
-(CandyGet as CGExport).defaultOptions = objectAlias.assign({}, defaultOptions);
+(CandyGet as CGExport).defaultOptions = objectAlias_assign({}, defaultOptions);
 
 const candyget = objectAlias.freeze(CandyGet) as CGExport;
 export = candyget;
