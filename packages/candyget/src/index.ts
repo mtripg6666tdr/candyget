@@ -695,7 +695,7 @@ const defaultOptions = {
   transformerOptions: {
     autoDestroy: true,
   },
-  fetch: true,
+  fetch: false,
 };
 
 (CandyGet as CGExport).defaultOptions = objectAlias.assign({}, defaultOptions);
