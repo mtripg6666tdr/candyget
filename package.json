@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces && tsc -b --verbose",
+    "build": "npm run build --workspaces && echo OK && tsc --version && tsc -b --verbose",
     "lint": "npm run lint --workspaces",
     "test": "run-p start:mock-server test:unit",
     "test:unit": "npm run test --workspaces",
