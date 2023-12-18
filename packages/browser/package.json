@@ -12,6 +12,7 @@
   "main": "./cjs/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\"",
+    "build": "npm run build:cjs",
     "build:cjs": "swc src -d ./cjs/",
     "lint": "eslint .",
     "cleanup": "rimraf dist tsconfig.tsbuildinfo"
