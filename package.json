@@ -24,7 +24,7 @@
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
     "abort-controller": "^3.0.0",
-    "chai": "^4.3.10",
+    "chai": "^5.0.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.56.0",
     "eslint-define-config": "^2.1.0",
