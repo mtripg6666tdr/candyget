@@ -19,7 +19,7 @@
     "@swc/core": "^1.5.24",
     "@types/chai": "^4.3.12",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.14.0",
+    "@types/node": "^20.14.2",
     "@types/node-fetch": "^2.6.9",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
