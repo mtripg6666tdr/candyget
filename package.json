@@ -18,7 +18,7 @@
     "@swc/cli": "^0.3.12",
     "@swc/core": "^1.6.5",
     "@types/chai": "^4.3.12",
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.7",
     "@types/node": "^20.14.5",
     "@types/node-fetch": "^2.6.9",
     "@typescript-eslint/eslint-plugin": "^7.13.1",
